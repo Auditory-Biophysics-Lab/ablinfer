@@ -23,4 +23,4 @@ Base Module
    .. automethod:: _cleanup
    .. automethod:: _cleanup_all
 
-.. autoclass:: ablinfer.DispatchException
+.. autoexception:: ablinfer.DispatchException

@@ -108,7 +108,7 @@ class _SingleFileTar:
 
         return buff
 
-    def __init__(self, fname, name=None, buffsize=2097152):
+    def __init__(self, fname, name=None, buffsize=2097152, mode=0o640):
         self.offset = 0
         self.fname = fname
 
@@ -127,7 +127,7 @@ class _SingleFileTar:
         ## File name
         header += pad((os.path.basename(fname) if name is None else name).encode("ascii")+b'\0', 100)
         ## File mode (ignore for now)
-        header += pad_num("640", 8)
+        header += pad_num(oct(mode)[2:][-3:], 8)
         ## File owner (numeric, as ASCII)
         header += pad_num("", 8)
         ## File group (numeric, as ASCII)
@@ -163,25 +163,32 @@ class _SingleFileTar:
 
         self.size = blocks * 512
 
-def put_file(container: docker.models.containers.Container, path: str, fname: str, name: str = None) ->  None:
+def put_file(
+        container: docker.models.containers.Container, 
+        path: str, 
+        fname: str,
+        name: str = None,
+        mode: int = 0o640,
+    ) ->  None:
     """Put a single file into a container.
 
     Only works on single regular files and ignores all metadata.
 
-    @param path the directory in the container to extract to
-    @param fname the filename of the local file
-    @param name the name to store in the tar file; defaults to the basename of the file
+    :param path: The directory in the container to extract to.
+    :param fname: The filename of the local file.
+    :param name: The name to store in the tar file; defaults to the basename of the file.
+    :param mode: The mode for the stored file (3-digit octal number).
     """
 
-    with _SingleFileTar(fname, name) as f:
+    with _SingleFileTar(fname, name, mode=mode) as f:
         container.put_archive(path, f)
 
 def get_file(container: docker.models.containers.Container, path: str, dest: str = ".") ->  None:
     """Get a single file from a container.
 
-    @param path the path to retrieve
-    @param dest the filename to extract to. If it is an existing directory, the filename from the
-                tar file will be used
+    :param path: The path to retrieve.
+    :param dest: The filename to extract to. If it is an existing directory, the filename from the
+                 tar file will be used.
     """
     if os.path.isdir(dest):
         fname = None
