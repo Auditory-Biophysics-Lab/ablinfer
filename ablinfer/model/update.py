@@ -32,7 +32,7 @@ from typing import Tuple, Callable, IO, Dict, Union
 __version__ = "1.1"
 
 _UPDATES = {}
-def register(s: str) ->  Callable:
+def _register(s: str) ->  Callable:
     """Register an update function."""
     def reg_inner(f: Callable[[Dict], Dict]) ->  Callable[[Dict], Dict]:
         if s in _UPDATES:
@@ -42,7 +42,7 @@ def register(s: str) ->  Callable:
         return f
     return reg_inner
 
-@register("deepinfer")
+@_register("deepinfer")
 def _update_deepinfer(model):
     """Update from the DeepInfer model format."""
 
@@ -152,7 +152,7 @@ def _update_deepinfer(model):
 
     return nm
 
-@register("1.0")
+@_register("1.0")
 def update_1_0(model):
     model["json_version"] = "1.1"
     if "website" not in model:
@@ -162,10 +162,12 @@ def update_1_0(model):
 
     return model
 
-def update(model: Dict, updated: bool = False) ->  Tuple[Dict, bool]:
+def update_model(model: Dict, updated: bool = False) ->  Tuple[Dict, bool]:
     """Update a model to the newest version.
 
-    @returns the updated model and a boolean indicating whether an update was performed
+    Note that no verification of fields not affected by the updates is conducted.
+
+    :returns: The updated model and a boolean indicating whether an update was performed.
     """
     if "json_version" in model:
         v = model["json_version"]
@@ -182,28 +184,4 @@ def update(model: Dict, updated: bool = False) ->  Tuple[Dict, bool]:
 
     nm = _UPDATES[v](model)
 
-    return update(nm)[0], True
-
-def load_model(f: Union[str, IO], fp: bool = True) ->  Tuple[Dict, bool]:
-    """Load a model.
-
-    @param f the file or string to load from
-    @param fp whether f is a file-like object or a string
-
-    @returns the updated model and a boolean indicating whether an update was performed
-    """
-    if fp:
-        inp = json.load(f, object_pairs_hook=OD)
-    else:
-        inp = json.loads(f, object_pairs_hook=OD)
-
-    return update(inp)
-
-if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) != 3:
-        sys.stderr.write("Update a model file to the latest version.\nUsage: %s <input model> <output file>\n" % sys.argv[0])
-
-    with open(sys.argv[1], 'r') as f, open(sys.argv[2], 'w') as of:
-        json.dump(load_model(f)[0], of, indent=4)
+    return update_model(nm)[0], True

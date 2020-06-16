@@ -4,7 +4,7 @@ import logging
 
 import docker
 
-from ..base import DispatchBase
+from ..base import DispatchBase, DispatchException
 ## FIXME: The following import should be removed when DeviceRequest support is added to `docker-py`
 from ._docker_patch import DeviceRequest
 from .docker_helper import put_file, get_file
@@ -77,7 +77,8 @@ class DispatchDocker(DispatchBase):
             progress(0, line)
         resp = self.container.wait()
         if resp["StatusCode"] != 0:
-            raise Exception("Failed")
+            ## Don't bother getting stderr, they can just get the logs themselves
+            raise DispatchException("Called process failed")
 
     def _cleanup(self, error=False):
         super(DispatchDocker, self)._cleanup(error=error)

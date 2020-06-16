@@ -38,7 +38,7 @@ class DispatchBase(metaclass=ABCMeta):
     8. :meth:`_run_command`
     9. :meth:`_load_output`
     10. :meth:`_run_processing`
-    11. :meth:`_cleanup()`
+    11. :meth:`_cleanup`
 
     Functions are expected to raise exceptions if they encounter any unfixable errors. If an
     exception is raised, :meth:`_cleanup_all` will be called.
@@ -217,14 +217,14 @@ class DispatchBase(metaclass=ABCMeta):
         :param fmap: The file map.
         """
 
-    def _cleanup(self, error: bool = False) ->  None:
+    def _cleanup(self, error: Exception = None) ->  None:
         """Run successful cleanup.
 
         This function should conduct all of the cleanup necessary for a successful run. This will
         also be called if the run fails. This means that this function should run checks of its
         own to see what actually needs to be cleaned up.
 
-        :param error: Whether or not an error was encountered.
+        :param error: The exception, if one occurred. 
         """
         for f in self._created_files:
             try:
@@ -232,12 +232,14 @@ class DispatchBase(metaclass=ABCMeta):
             except:
                 pass
 
-    def _cleanup_all(self) ->  None:
+    def _cleanup_all(self, error: Exception) ->  None:
         """Cleanup everything.
 
         This will only be called if an error is raised.
+        
+        :param error: The exception that occurred.
         """
-        self._cleanup(error=True)
+        self._cleanup(error=error)
         for f in self._output_files:
             try:
                 os.remove(f)
@@ -275,11 +277,11 @@ class DispatchBase(metaclass=ABCMeta):
             self._run_processing(inp=False)
 
             logging.info("Cleaning up inputs...")
-            self._cleanup(error=False)
+            self._cleanup(error=None)
 
             logging.info('Processing completed')
         except Exception as e:
-            self._cleanup_all()
+            self._cleanup_all(e)
             raise e
 
     def run(self, model: Mapping, model_config: Mapping, progress: Callable[[float, str], None] = print) ->  None:
