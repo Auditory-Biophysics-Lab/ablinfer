@@ -6,7 +6,7 @@ from collections import OrderedDict as OD
 import json
 import logging
 from numbers import Number
-from typing import Mapping, Optional, get_args, Collection, Union, get_origin, IO, Tuple, Dict, Set, Any
+from typing import Mapping, Optional, Collection, Union, IO, Tuple, Dict, Set, Any
 from .update import __version__, update_model
 
 def normalize_model(model: Mapping, processing: bool = False):
@@ -30,8 +30,8 @@ def normalize_model(model: Mapping, processing: bool = False):
         return isinstance(a, t)
 
     def check_rec(v, t):
-        origin = get_origin(t)
-        args = get_args(t)
+        origin = t.__origin__
+        args = t.__args__
         if origin == Union:
             if None in args and v is None:
                 return True
@@ -56,7 +56,7 @@ def normalize_model(model: Mapping, processing: bool = False):
                 t, c = t
             else:
                 c = None
-            optional = (get_origin(t) == Union) and (type(None) in get_args(t))
+            optional = (t.__origin__ == Union) and (type(None) in t.__args__)
 
             if not optional and k not in d:
                 raise ValueError("Missing required field %s" % '/'.join(fragment+(k,)))

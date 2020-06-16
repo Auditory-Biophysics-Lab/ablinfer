@@ -13,6 +13,7 @@ Welcome to ABLInfer's documentation!
    base
    docker
    model
+   model_ref
 
 
 Indices and tables
