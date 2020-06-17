@@ -290,7 +290,7 @@ class DispatchBase(metaclass=ABCMeta):
         This is the entry point
 
         :param model: The loaded model JSON file.
-        :param model_config: The model parameters, as returned by `ModelConfigWidget.get_values`.
+        :param model_config: The model configuration.
         :param progress: an optional function accepting a float on [0,1] representing current
                          progress in the model and an optional string with more detailed info
         """

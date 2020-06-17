@@ -1,3 +1,5 @@
+.. _model-reference:
+
 Model Reference
 ===============
 
@@ -428,6 +430,8 @@ This field is an optional list of the order in which the inputs, outputs, and pa
        "order": ["input1", "output1", "param1"]
    }
 
+.. _model-example:
+
 A Complete Example
 ------------------
 
@@ -547,7 +551,7 @@ The following is a complete example of a model, tying together all of the above 
                "type": "segmentation",
                "labelmap": true,
                "master": "input_vol",
-               "pre": [
+               "post": [
                    {
                        "name": "Island Removal",
                        "description": "Remove all islands",

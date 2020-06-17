@@ -12,10 +12,14 @@ from .docker_helper import put_file, get_file
 class DispatchDocker(DispatchBase):
     """Class for dispatching to a Docker container.
 
-    A "docker" key is added to `config`, which should contain all of the keyword arguments to pass
-    to `docker.DockerClient`, excepting `version`. If not present, `docker.from_env` is used (so
-    either "docker" should be present or you should properly set environment variables, the latter
-    being preferred).
+    A ``docker`` key is added to ``config``, which should contain all of the keyword arguments to
+    pass to ``docker.DockerClient``, excepting ``version``. If not present, ``docker.from_env`` is
+    used (so either ``docker`` should be present or you should properly set environment variables, 
+    the latter being preferred).
+
+    This implementation expects the model configuration values to be the path to the appropriate 
+    files on the **host machine**, which it will then put into/get from the container during the 
+    run.
     """
     def __init__(self, config=None):
         super(DispatchDocker, self).__init__(config=config)

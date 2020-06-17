@@ -14,6 +14,7 @@ Welcome to ABLInfer's documentation!
    docker
    model
    model_ref
+   model_config
 
 
 Indices and tables
