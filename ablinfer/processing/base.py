@@ -1,11 +1,38 @@
 """Module for pre/post-processing."""
 
+from collections.abc import Mapping as CMapping
+import logging
 from typing import Mapping, Callable, Any, Union, Optional, Sequence
+
+class ROMappingWrapper(Mapping):
+    def __init__(self, data):
+        self._data = data
+        self._wrapped = {}
+
+    def __getitem__(self, key):
+        if isinstance(self._data[key], CMapping):
+            if key not in self._wrapped or self._wrapped[key]._data != self._data[key]:
+                self._wrapped[key] = ROMappingWrapper(self._data[key])
+            return self._wrapped[key]
+        return self._data[key]
+
+    def __eq__(self, other):
+        if not isinstance(other, ROMappingWrapper):
+            return False
+        return self._data == other._data
+
+    def __len__(self):
+        return len(self._data)
+
+    def __iter__(self):
+        return iter(self._data)
 
 _OPS: Mapping[str, Mapping] = {
     "input": {},
     "output": {},
 }
+
+processing_ops = ROMappingWrapper(_OPS)
 
 def register_processing(typ: Union[str, Sequence[str], None], name: str, types: str, actions: Optional[Mapping]) ->  Callable:
     """Register a processing operation.
@@ -49,7 +76,7 @@ def register_processing(typ: Union[str, Sequence[str], None], name: str, types: 
     def wrapper(f):
         for t in typ:
             if name in _OPS[t]:
-                raise ValueError("Processing function %s/%s already registered" % (t, name))
+                logging.warning("Processing function %s/%s already registered" % (t, name))
             _OPS[t][name] = (f, types, actions)
 
         return f
@@ -58,13 +85,13 @@ def register_processing(typ: Union[str, Sequence[str], None], name: str, types: 
 def dispatch_processing(op: Mapping, op_config: Mapping, node: Any, node_section: Mapping, model: Mapping, model_config: Mapping, inp: bool = True) ->  None:
     """Dispatch a processing operation.
 
-    @param op the current operation's section in the model
-    @param op_config the current operation's config section from the model_config
-    @param node the node to operate on (e.g. filename)
-    @param node_section the node's section from the model
-    @param model the entire model specification
-    @param model the entire model config
-    @param inp whether or not this is an input
+    :param op: the current operation's section in the model
+    :param op_config: the current operation's config section from the model_config
+    :param node: the node to operate on (e.g. filename)
+    :param node_section: the node's section from the model
+    :param model: the entire model specification
+    :param model: the entire model config
+    :param inp: whether or not this is an input
     """
     if inp:
         typ = "input"

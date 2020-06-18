@@ -9,6 +9,12 @@ from numbers import Number
 from typing import Mapping, Optional, Collection, Union, IO, Tuple, Dict, Set, Any
 from .update import __version__, update_model
 
+def get_origin(t):
+    return t.__origin__ if hasattr(t, "__origin__") else t
+
+def get_args(t):
+    return t.__args__ if hasattr(t, "__args__") else ()
+
 def normalize_model(model: Mapping, processing: bool = False):
     """Normalize the given model. 
 
@@ -30,8 +36,8 @@ def normalize_model(model: Mapping, processing: bool = False):
         return isinstance(a, t)
 
     def check_rec(v, t):
-        origin = t.__origin__
-        args = t.__args__
+        origin = get_origin(t)
+        args = get_args(t)
         if origin == Union:
             if None in args and v is None:
                 return True
@@ -56,7 +62,8 @@ def normalize_model(model: Mapping, processing: bool = False):
                 t, c = t
             else:
                 c = None
-            optional = (t.__origin__ == Union) and (type(None) in t.__args__)
+
+            optional = (get_origin(t) == Union) and (type(None) in t.__args__)
 
             if not optional and k not in d:
                 raise ValueError("Missing required field %s" % '/'.join(fragment+(k,)))

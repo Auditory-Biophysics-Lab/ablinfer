@@ -22,6 +22,8 @@ class DispatchDocker(DispatchBase):
     run.
     """
     def __init__(self, config=None):
+        self.client = None
+
         super(DispatchDocker, self).__init__(config=config)
 
         ## The version here must be "auto". At the time of this writing, `docker-py` defaults to
@@ -34,7 +36,22 @@ class DispatchDocker(DispatchBase):
 
         self.container = None
 
+    def _validate_config(self):
+        super()._validate_config()
+
+        ## The version here must be "auto". At the time of this writing, `docker-py` defaults to
+        ## using a version of the API too old to allow GPU support, even if the server supports it.
+        ## Setting it to "auto" negotiates the version to the highest common version.
+        if "docker" not in self.config or self.config["docker"] is None:
+            self.client = docker.from_env(version="auto")
+        else:
+            self.client = docker.DockerClient(version="auto", **self.config["docker"])
+
+        self.client.ping()
+
     def _validate_model_config(self):
+        super()._validate_model_config()
+
         imagename = self.model["docker"]["image_name"] + ':' + self.model["docker"]["image_tag"]
         self.client.images.get(imagename)
 
@@ -84,8 +101,8 @@ class DispatchDocker(DispatchBase):
             ## Don't bother getting stderr, they can just get the logs themselves
             raise DispatchException("Called process failed")
 
-    def _cleanup(self, error=False):
-        super(DispatchDocker, self)._cleanup(error=error)
+    def _cleanup(self, error=None):
+        super()._cleanup(error=error)
         if self.container is not None:
             self.container.remove()
 

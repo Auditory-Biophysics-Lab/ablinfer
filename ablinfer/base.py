@@ -232,6 +232,8 @@ class DispatchBase(metaclass=ABCMeta):
             except:
                 pass
 
+        self._created_files = []
+
     def _cleanup_all(self, error: Exception) ->  None:
         """Cleanup everything.
 
@@ -245,6 +247,8 @@ class DispatchBase(metaclass=ABCMeta):
                 os.remove(f)
             except:
                 pass
+
+        self._output_files = []
 
     def _run(self, progress: Callable[[float, str], None]) ->  None:
         """Actual run method.
