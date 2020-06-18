@@ -10,4 +10,5 @@ model specification files.
 """
 
 from .update import update_model
-from .normalize import load_model, normalize_model
+from .normalize import load_model, normalize_model, update_normalize_model
+from .config import normalize_model_config

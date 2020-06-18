@@ -15,7 +15,7 @@ class DispatchDocker(DispatchBase):
     A ``docker`` key is added to ``config``, which should contain all of the keyword arguments to
     pass to ``docker.DockerClient``, excepting ``version``. If not present, ``docker.from_env`` is
     used (so either ``docker`` should be present or you should properly set environment variables, 
-    the latter being preferred).
+    the latter being preferred). 
 
     This implementation expects the model configuration values to be the path to the appropriate 
     files on the **host machine**, which it will then put into/get from the container during the 
@@ -23,18 +23,9 @@ class DispatchDocker(DispatchBase):
     """
     def __init__(self, config=None):
         self.client = None
+        self.container = None
 
         super(DispatchDocker, self).__init__(config=config)
-
-        ## The version here must be "auto". At the time of this writing, `docker-py` defaults to
-        ## using a version of the API too old to allow GPU support, even if the server supports it.
-        ## Setting it to "auto" negotiates the version to the highest common version.
-        if "docker" not in self.config or self.config["docker"] is None:
-            self.client = docker.from_env(version="auto")
-        else:
-            self.client = docker.DockerClient(version="auto", **self.config["docker"])
-
-        self.container = None
 
     def _validate_config(self):
         super()._validate_config()

@@ -25,11 +25,12 @@ v1.0
 
 from collections import OrderedDict as OD
 import json
+import hashlib
 import logging
 import re
 from typing import Tuple, Callable, IO, Dict, Union
 
-__version__ = "1.1"
+__version__ = "1.2"
 
 _UPDATES = {}
 def _register(s: str) ->  Callable:
@@ -159,6 +160,17 @@ def update_1_0(model):
         model["website"] = ""
     if "brief_description" in model:
         del model["brief_description"]
+
+    return model
+
+@_register("1.1")
+def update_1_1(model):
+    model["json_version"] = "1.2"
+    if "id" not in model:
+        tid = model["name"].lower().replace(' ', '_').replace('-', '_')
+        if not tid.isidentifier():
+            tid = "model_" + hashlib.md5(model["name"].encode("utf-8")).hexdigest()
+        model["id"] = tid
 
     return model
 

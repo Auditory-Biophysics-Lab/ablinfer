@@ -3,7 +3,7 @@
 Model Reference
 ===============
 
-All models are specified using JSON files. These specifications tell ABLInfer how to interface with the model, what parameters it expects, any pre/post-processing, as well as some helpful metadata for the user. The name of the file serves as the ID of the model, so it must be something without spaces or special characters, excepting the usual ones (e.g. underscore, dash).
+All models are specified using JSON files. These specifications tell ABLInfer how to interface with the model, what parameters it expects, any pre/post-processing, as well as some helpful metadata for the user. 
 
 The format of model specification files used by ABLInfer is based on the model specifications for DeepInfer, with the notable additions of the standardization of metadata fields and the addition of pre/post-processing blocks.
 
@@ -21,6 +21,8 @@ Metadata (``/``)
      - The version of the JSON model format that this model conforms to.
    * - ``type``
      - The type of application to run. Currently, only ``"docker"`` is supported.
+   * - ``id``
+     - The ID for the model. Must be a valid Python identifier.
    * - ``name``
      - The name of the model, in a human-friendly format.
    * - ``organ``

@@ -9,6 +9,7 @@ from threading import Lock
 from typing import List, Mapping, Any, Callable, Dict
 
 from .processing import dispatch_processing
+from .model import normalize_model_config, update_normalize_model
 
 class DispatchException(Exception):
     """To be raised if a process runs into a problem.
@@ -66,16 +67,20 @@ class DispatchBase(metaclass=ABCMeta):
     def _validate_model_config(self) ->  None:
         """Validate the model configuration.
 
-        We assume for convenience that validation has already been done by the config widget, i.e.
-        each input/output/parameter has a proper type, default value, etc. The main validation done
-        here is to make sure that no inputs/outputs are the same and no inputs are null.
+        This first normalizes the model config, which also validates it. It then ensures that no 
+        inputs are null, no two outputs are the same, and no outputs are the same as inputs.
+
+        Note that when overriding this method without delegating here, the new method **must** 
+        normalize the model config by calling :func:``ablinfer.model.normalize_model_config``.
         """
+        self.model_config = normalize_model_config(self.model, self.model_config)
+
         in_nodes = {i["value"] for i in self.model_config["inputs"].values()}
         if None in in_nodes:
             raise ValueError("Make sure that all inputs are selected!")
 
         out_nodes = {i["value"] for i in self.model_config["outputs"].values()}
-        if in_nodes.intersection(out_nodes).difference((None,)):
+        if in_nodes.intersection(out_nodes).difference((None,)) or len(out_nodes) != len(self.model_config["outputs"]):
             raise ValueError("Inputs and outputs must be different")
 
     def _make_fmap_helper(self, actual_path: str) ->  Mapping[str, str]:
@@ -293,14 +298,14 @@ class DispatchBase(metaclass=ABCMeta):
 
         This is the entry point
 
-        :param model: The loaded model JSON file.
+        :param model: The model specification.
         :param model_config: The model configuration.
         :param progress: an optional function accepting a float on [0,1] representing current
                          progress in the model and an optional string with more detailed info
         """
         ## Ensure only one run is underway
         with self._lock:
-            self.model = model
+            self.model = update_normalize_model(model)[0]
             self.model_config = model_config
 
             self._run(progress)

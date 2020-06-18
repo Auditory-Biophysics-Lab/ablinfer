@@ -6,3 +6,4 @@ Model Module
 .. autofunction:: load_model
 .. autofunction:: normalize_model
 .. autofunction:: update_model
+.. autofunction:: update_normalize_model
