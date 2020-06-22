@@ -49,6 +49,10 @@ def normalize_model_config(model: Mapping, model_config: Mapping) -> Mapping:
                             if p not in elem["params"]:
                                 elem["params"][p] = v
 
+    if "params" not in model_config:
+        logging.warning("Missing params section")
+        model_config["params"] = {}
+
     csec = model_config["params"]
     for name, spec in model["params"].items():
         if name not in csec:

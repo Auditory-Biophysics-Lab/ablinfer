@@ -34,7 +34,7 @@ class DispatchRemote(DispatchBase):
         self.remote_session = None
         self.model_id = None
 
-        super().__init__()
+        super().__init__(config=config)
 
     def get_model(self, model_id: str):
         """Retrieve a model from the site.
@@ -44,7 +44,7 @@ class DispatchRemote(DispatchBase):
         :param model_id: The model's ID.
         """
         with self._lock:
-            resp = self.session.get(urljoin_b(self.base_url, "models", "model_id"), auth=self.auth)
+            resp = self.session.get(urljoin_b(self.base_url, "models", model_id), auth=self.auth)
             resp.raise_for_status()
             return resp.json(object_pairs_hook=OD)["data"]
 
@@ -68,15 +68,19 @@ class DispatchRemote(DispatchBase):
     def _validate_model_config(self):
         ## We need to check that the server has the correct version of the model first
         self.model_id = self.model["id"]
+        print("yo2")
         try:
             model = self.get_model(self.model_id)
+            print("yo3")
         except Exception as e:
             raise DispatchException("Unable to retrieve model from the server: %s" % repr(e))
 
         if self.model["version"] != model["version"]:
             raise DispatchException("Version mismatch between server model and local model: server has v%s, we have v%s" % (model["version"], self.model["version"]))
 
+        print("yo")
         super()._validate_model_config()
+        print("yo1")
 
     def _make_fmap(self):
         return {}
@@ -92,7 +96,7 @@ class DispatchRemote(DispatchBase):
         )
         resp.raise_for_status()
 
-        self.remote_session = resp.join()["data"]["session_id"]
+        self.remote_session = resp.json()["data"]["session_id"]
 
         return []
 
@@ -101,6 +105,7 @@ class DispatchRemote(DispatchBase):
 
     def _save_input(self, fmap):
         for name, v in self.model_config["inputs"].items():
+            logging.info("Uploading %s..." % name)
             with open(v["value"], "rb") as f:
                 resp = self.session.put(urljoin_b(self.base_url, "sessions", self.remote_session, "inputs", name), headers={"Content-Type": "application/octet-stream"}, data=f, auth=self.auth)
                 resp.raise_for_status()

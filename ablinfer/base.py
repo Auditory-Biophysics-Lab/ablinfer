@@ -5,7 +5,7 @@ from __future__ import division
 from abc import ABCMeta, abstractmethod
 import logging
 import os
-from threading import Lock
+from threading import RLock
 from typing import List, Mapping, Any, Callable, Dict
 
 from .processing import dispatch_processing
@@ -54,7 +54,7 @@ class DispatchBase(metaclass=ABCMeta):
         self._output_files: List[str] = []
         self._pre_nodes: Dict[str, Any] = {}
 
-        self._lock = Lock()
+        self._lock = RLock()
 
         self.model: Mapping[str, Any] = None
         self.model_config: Mapping[str, Any] = None

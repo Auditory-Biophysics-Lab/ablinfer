@@ -27,6 +27,10 @@ class DispatchDocker(DispatchBase):
 
         super(DispatchDocker, self).__init__(config=config)
 
+    def _on_container_start(self):
+        """Called when the container is actually started."""
+        return
+
     def _validate_config(self):
         super()._validate_config()
 
@@ -85,6 +89,7 @@ class DispatchDocker(DispatchBase):
     def _run_command(self, cmd, progress):
         ## Ignore cmd, it's not actually helpful anymore
         self.container.start()
+        self._on_container_start()
         for line in self.container.logs(stream=True):
             progress(0, line)
         resp = self.container.wait()
