@@ -13,4 +13,8 @@ setuptools.setup(
         "Operation System :: OS Independent",
     ],
     python_requires=">=3.3",
+    install_requires=[
+        "docker==4.2.0",
+        "requests",
+    ],
 )

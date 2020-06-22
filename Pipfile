@@ -8,5 +8,4 @@ sphinx = "*"
 
 [packages]
 docker = "4.2.0"
-six = "*"
 requests = "*"
