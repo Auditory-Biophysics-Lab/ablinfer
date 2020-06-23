@@ -5,6 +5,7 @@ import logging
 import docker
 
 from ..base import DispatchBase, DispatchException
+from ..constants import DispatchStage
 ## FIXME: The following import should be removed when DeviceRequest support is added to `docker-py`
 from ._docker_patch import DeviceRequest
 from .docker_helper import put_file, get_file
@@ -80,18 +81,20 @@ class DispatchDocker(DispatchBase):
     def _save_input(self, fmap):
         ## We assume here that all of the inputs and outputs are strings, indicating the file
         ## locations on the local machine. We need to copy the input files into the container
-        for k, v in self.model_config["inputs"].items():
+        total = len(self.model_config["inputs"])
+        for n, (k, v) in enumerate(self.model_config["inputs"].items()):
             fname, fpath = (i[::-1] for i in fmap[k][::-1].split('/', 1))
 
             logging.info("Storing file %s to container as %s" % (v["value"], fpath+'/'+fname))
+            self.progress(DispatchStage.Save, n/total, 0, "Storing file %s...")
             put_file(self.container, fpath, v["value"], name=fname)
 
-    def _run_command(self, cmd, progress):
+    def _run_command(self, cmd):
         ## Ignore cmd, it's not actually helpful anymore
         self.container.start()
         self._on_container_start()
         for line in self.container.logs(stream=True):
-            progress(0, line)
+            self.progress(DispatchStage.Run, 0, 0, line)
         resp = self.container.wait()
         if resp["StatusCode"] != 0:
             ## Don't bother getting stderr, they can just get the logs themselves
@@ -103,6 +106,8 @@ class DispatchDocker(DispatchBase):
             self.container.remove()
 
     def _load_output(self, fmap):
-        for k, v in self.model_config["outputs"].items():
+        total = len(self.model_config["outputs"])
+        for n, (k, v) in enumerate(self.model_config["outputs"].items()):
             self._output_files.append(v["value"])
+            self.progress(DispatchStage.Load, n/total, 0, "Storing file %s...")
             get_file(self.container, fmap[k], v["value"])

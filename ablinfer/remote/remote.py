@@ -2,12 +2,15 @@
 
 from collections import OrderedDict as OD
 import logging
+import os
 from urllib.parse import urljoin
 import time
 
 import requests as r
 
 from ..base import DispatchBase, DispatchException
+from ..constants import DispatchStage
+from .util import ProgressReporter, save_resp, FObjReadWrapper
 
 def urljoin_b(*args):
     """Make urljoin behave like path.join to preserve my sanity."""
@@ -21,15 +24,12 @@ class DispatchRemote(DispatchBase):
     """Class for dispatching to an ABLInfer server.
 
     A required ``base_url`` key is added to ``config``, which must be the server's base URL, which
-    will be passed to :func:``urllib.parse.urljoin`` to construct the query URLs. In addition, an
-    optional key ``auth`` is added to ``config``, which may be of any form accepted by the ``auth``
-    parameter of the various :module:``requests`` methods. Lastly, for other auth forms a 
+    will be passed to :func:``urllib.parse.urljoin`` to construct the query URLs. In addition, a
     ``session`` parameter is added to ``config`` which allows the user to provide a 
-    :class:``requests.Session`` instance.
+    :class:``requests.Session`` instance for SSL verification or authentication.
     """
     def __init__(self, config=None):
         self.base_url = None
-        self.auth = None
         self.session = None
         self.remote_session = None
         self.model_id = None
@@ -44,7 +44,7 @@ class DispatchRemote(DispatchBase):
         :param model_id: The model's ID.
         """
         with self._lock:
-            resp = self.session.get(urljoin_b(self.base_url, "models", model_id), auth=self.auth)
+            resp = self.session.get(urljoin_b(self.base_url, "models", model_id))
             resp.raise_for_status()
             return resp.json(object_pairs_hook=OD)["data"]
 
@@ -54,12 +54,11 @@ class DispatchRemote(DispatchBase):
         self.base_url = self.config["base_url"]
         if not self.base_url.endswith('/'):
             self.base_url += '/'
-        self.auth = self.config["auth"] if "auth" in self.config else None
         self.session = self.config["session"] if "session" in self.config else r.Session()
 
         ## Check the server
         logging.info("Trying server at %s..." % self.base_url)
-        resp = r.get(self.base_url)
+        resp = self.session.get(self.base_url)
         resp.raise_for_status()
         resp = resp.json()
         if resp["data"]["server"] != "ablinfer":
@@ -68,19 +67,15 @@ class DispatchRemote(DispatchBase):
     def _validate_model_config(self):
         ## We need to check that the server has the correct version of the model first
         self.model_id = self.model["id"]
-        print("yo2")
         try:
             model = self.get_model(self.model_id)
-            print("yo3")
         except Exception as e:
             raise DispatchException("Unable to retrieve model from the server: %s" % repr(e))
 
         if self.model["version"] != model["version"]:
             raise DispatchException("Version mismatch between server model and local model: server has v%s, we have v%s" % (model["version"], self.model["version"]))
 
-        print("yo")
         super()._validate_model_config()
-        print("yo1")
 
     def _make_fmap(self):
         return {}
@@ -92,7 +87,6 @@ class DispatchRemote(DispatchBase):
         resp = self.session.post(
             urljoin_b(self.base_url, "models", self.model_id), 
             json={"params": self.model_config["params"]},
-            auth=self.auth
         )
         resp.raise_for_status()
 
@@ -101,22 +95,37 @@ class DispatchRemote(DispatchBase):
         return []
 
     def _get_status(self):
-        return self.session.get(urljoin_b(self.base_url, "sessions", self.remote_session), auth=self.auth).json()["data"]["status"]
+        return self.session.get(urljoin_b(self.base_url, "sessions", self.remote_session)).json()["data"]["status"]
 
     def _save_input(self, fmap):
-        for name, v in self.model_config["inputs"].items():
-            logging.info("Uploading %s..." % name)
+        total = len(self.model_config["inputs"])
+        for n, (name, v) in enumerate(self.model_config["inputs"].items()):
+            string = "Uploading %s..." % name
+            logging.info(string)
             with open(v["value"], "rb") as f:
-                resp = self.session.put(urljoin_b(self.base_url, "sessions", self.remote_session, "inputs", name), headers={"Content-Type": "application/octet-stream"}, data=f, auth=self.auth)
+                header = f.read(1024)
+                f.seek(0)
+                resp = self.session.post(urljoin_b(self.base_url, "models", self.model["id"], "inputs", name, "check"), data=header)
+                resp.raise_for_status()
+                j = resp.json()
+                if not j["data"]["acceptable"]:
+                    ft = j["data"]["acceptable"]
+                    ft = ft if ft is not None else "unknown"
+                    raise DispatchException("Invalid filetype for input %s; expected %s, got %s" % (name, self.model["inputs"][name]["extension"], j["data"]["filetype"]))
+
+                fwrap = FObjReadWrapper(f, os.path.getsize(v["value"]), string, lambda f, s: self.progress(DispatchStage.Save, n/total + f/total, f, s), period=0.1)
+                resp = self.session.put(urljoin_b(self.base_url, "sessions", self.remote_session, "inputs", name), headers={"Content-Type": "application/octet-stream"}, data=fwrap)
                 resp.raise_for_status()
         if self._get_status() == "waiting":
             raise DispatchException("Session ID %s is still waiting for input, but all input has been provided, please report this" % self.remote_session)
 
-    def _run_command(self, cmd, progress):
+    def _run_command(self, cmd):
         logging.info("Starting run...")
-        resp = self.session.get(urljoin_b(self.base_url, "sessions", self.remote_session, "logs"), auth=self.auth, stream=True)
-        for line in resp.iter_lines(512):
-            progress(0.5, line.decode("utf-8"))
+        resp = self.session.get(urljoin_b(self.base_url, "sessions", self.remote_session, "logs"), stream=True)
+        for line in resp.iter_lines(5):
+            if line == b"\0":
+                continue
+            self.progress(DispatchStage.Run, 0, 0, line.decode("utf-8"))
 
         ## Now the run is over
         logging.info("Logs ended, waiting for the session to finish...")
@@ -130,19 +139,17 @@ class DispatchRemote(DispatchBase):
             raise DispatchException("Session ID %s failed, please report this" % self.remote_session)
 
     def _load_output(self, fmap):
-        for name, v in self.model_config["outputs"].items():
+        total = len(self.model_config["outputs"].items())
+        for n, (name, v) in enumerate(self.model_config["outputs"].items()):
             logging.info("Saving output %s" % name)
             self._output_files.append(v["value"])
-            with open(v["value"], "wb") as f:
-                resp = self.session.get(urljoin_b(self.base_url, "sessions", self.remote_session, "outputs", name), auth=self.auth, stream=True)
-                resp.raise_for_status()
-                for chunk in resp.iter_content(1048576):
-                    f.write(chunk)
+            resp = self.session.get(urljoin_b(self.base_url, "sessions", self.remote_session, "outputs", name), stream=True)
+            resp.raise_for_status()
+            save_resp(resp, v["value"], "Saving output %s..." % name, lambda f, s: self.progress(DispatchStage.Load, n/total + f/total, f, s), period=0.1)
 
     def _cleanup(self, error=None):
         super()._cleanup(error=error)
 
         self.remote_session = None
         self.session = None
-        self.auth = None
         self.model_id = None

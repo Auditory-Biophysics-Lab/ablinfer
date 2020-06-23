@@ -10,6 +10,7 @@ from typing import List, Mapping, Any, Callable, Dict
 
 from .processing import dispatch_processing
 from .model import normalize_model_config, update_normalize_model
+from .constants import DispatchStage
 
 class DispatchException(Exception):
     """To be raised if a process runs into a problem.
@@ -58,6 +59,7 @@ class DispatchBase(metaclass=ABCMeta):
 
         self.model: Mapping[str, Any] = None
         self.model_config: Mapping[str, Any] = None
+        self.progress: Callable[[DispatchStage, float, float, str], None] = None
 
         self._validate_config()
 
@@ -121,16 +123,20 @@ class DispatchBase(metaclass=ABCMeta):
         """
         section = "inputs" if inp else "outputs"
         process = "pre" if inp else "post"
+        stage = DispatchStage.Preprocess if inp else DispatchStage.Postprocess
 
         if inp:
             self._pre_nodes = {}
 
-        for o, member in self.model[section].items():
+        total = len(self.model[section])
+        for count, (o, member) in enumerate(self.model[section].items()):
             node = self.model_config[section][o]["value"]
 
             if process not in member:
                 continue
-            logging.info("Running %sprocessing for %s..." % (process, member["name"]))
+            string = "Running %sprocessing for %s..." % (process, member["name"])
+            logging.info(string)
+            self.progress(stage, count/total, 0, string)
 
             ## Clone nodes if we're pre-processing
             if inp and True in (i["enabled"] for i in self.model_config[section][o][process]):
@@ -140,8 +146,10 @@ class DispatchBase(metaclass=ABCMeta):
                     self._pre_nodes[o] = cnode
                 node = cnode
 
+            total_ops = len(member[process])
             for n, op in enumerate(member[process], 1):
                 logging.info("%d. %s" % (n, op["name"]))
+                self.progress(stage, count/total+(n-1)/(total*total_ops), (n-1)/total_ops, string+" %d. %s" % (n, op["name"]))
                 if not self.model_config[section][o][process][n-1]["enabled"]:
                     logging.info("- Not enabled: skipping")
                     continue
@@ -203,13 +211,12 @@ class DispatchBase(metaclass=ABCMeta):
         return flags
 
     @abstractmethod
-    def _run_command(self, cmd: List[str], progress: Callable[[float, str], None]) ->  None:
+    def _run_command(self, cmd: List[str]) -> None:
         """Run the actual command.
 
         Must raise :class:`DispatchException` if the called process runs into a problem.
 
         :param cmd: The command to execute.
-        :param progress: The function to call with progress reports.
         """
 
     @abstractmethod
@@ -255,7 +262,7 @@ class DispatchBase(metaclass=ABCMeta):
 
         self._output_files = []
 
-    def _run(self, progress: Callable[[float, str], None]) ->  None:
+    def _run(self) -> None:
         """Actual run method.
 
         This is just to make sure the run method can't be called twice at once.
@@ -264,48 +271,63 @@ class DispatchBase(metaclass=ABCMeta):
 
         try:
             logging.info("Validating model configuration...")
+            self.progress(DispatchStage.Validate, 0, 0, "Validating model configuration...")
             self._validate_model_config()
 
+            self.progress(DispatchStage.Validate, 0.5, 0, "Assembling command...")
             fmap = self._make_fmap()
             cmd = self._make_command(self._make_flags(fmap))
+            self.progress(DispatchStage.Validate, 1, 0, "Done validation")
 
+            self.progress(DispatchStage.Preprocess, 0, 0, "Starting pre-processing...")
             logging.info("Running pre-processing...")
             self._run_processing(inp=True)
+            self.progress(DispatchStage.Preprocess, 1, 0, "Done pre-processing")
 
+            self.progress(DispatchStage.Save, 0, 0, "Saving inputs...")
             self._save_input(fmap)
+            self.progress(DispatchStage.Save, 1, 0, "Done saving inputs")
 
             logging.info("Command: "+' '.join(cmd))
 
             logging.info("Running model...")
-            self._run_command(cmd, progress)
+            self.progress(DispatchStage.Run, 0, 0, "Running model...")
+            self._run_command(cmd)
+            self.progress(DispatchStage.Run, 1, 0, "Model finished")
 
+            self.progress(DispatchStage.Load, 0, 0, "Loading outputs...")
             logging.info("Loading output...")
             self._load_output(fmap)
+            self.progress(DispatchStage.Load, 1, 0, "Done loading outputs")
 
+            self.progress(DispatchStage.Postprocess, 0, 0, "Starting post-processing...")
             logging.info("Running post-processing...")
             self._run_processing(inp=False)
+            self.progress(DispatchStage.Postprocess, 1, 0, "Done post-processing")
 
             logging.info("Cleaning up inputs...")
             self._cleanup(error=None)
 
-            logging.info('Processing completed')
+            logging.info("Processing finished")
         except Exception as e:
             self._cleanup_all(e)
             raise e
 
-    def run(self, model: Mapping, model_config: Mapping, progress: Callable[[float, str], None] = print) ->  None:
+    def run(self, model: Mapping, model_config: Mapping, progress: Callable[[DispatchStage, float, float, str], None] = print) ->  None:
         """Run the model.
 
         This is the entry point
 
         :param model: The model specification.
         :param model_config: The model configuration.
-        :param progress: an optional function accepting a float on [0,1] representing current
-                         progress in the model and an optional string with more detailed info
+        :param progress: an optional function accepting a ``DispatchStage``, a float on [0,1] 
+                         representing progress in the current stage, a float on [0,1] representing 
+                         progress in the current operation, and a string with detailed info.
         """
         ## Ensure only one run is underway
         with self._lock:
             self.model = update_normalize_model(model)[0]
             self.model_config = model_config
+            self.progress = progress
 
-            self._run(progress)
+            self._run()
