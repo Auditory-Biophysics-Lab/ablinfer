@@ -219,6 +219,21 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
     del part_spec["extension"]
     verify_part("params")
 
+    field_set = set((*model["inputs"], *model["params"], *model["outputs"]))
+    flag_set = set((
+        *(i["flag"] for i in model["inputs"].values()), 
+        *(i["flag"] for i in model["params"].values()),
+        *(i["flag"] for i in model["outputs"].values()),
+    ))
+    if "order" in model and model["order"]:
+        if len(model["order"]) != len(model["inputs"]) + len(model["params"]) + len(model["outputs"]):
+            raise ValueError("Length of order does not match the number of inputs, outputs, and params")
+        elif set(model["order"]) != field_set:
+            raise ValueError("Order elements must match field names")
+    elif ("order" not in model or not model["order"]) and "" in flag_set:
+        raise ValueError("Order must be specified if positional arguments are used")
+
+
     return model
 
 def update_normalize_model(model: Mapping) -> Tuple[Mapping, bool]:

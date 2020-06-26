@@ -5,6 +5,7 @@ import logging
 import os
 from urllib.parse import urljoin
 import time
+from typing import List
 
 import requests as r
 
@@ -35,6 +36,13 @@ class DispatchRemote(DispatchBase):
         self.model_id = None
 
         super().__init__(config=config)
+
+    def get_model_list(self) -> List[str]:
+        """Retrieve the list of models available on the site."""
+        with self._lock:
+            resp = self.session.get(urljoin_b(self.base_url, "models"))
+            resp.raise_for_status()
+            return resp.json()["data"]
 
     def get_model(self, model_id: str):
         """Retrieve a model from the site.
@@ -123,7 +131,7 @@ class DispatchRemote(DispatchBase):
         logging.info("Starting run...")
         resp = self.session.get(urljoin_b(self.base_url, "sessions", self.remote_session, "logs"), stream=True)
         for line in resp.iter_lines(5):
-            if line == b"\0":
+            if line == b'\0':
                 continue
             self.progress(DispatchStage.Run, 0, 0, line.decode("utf-8"))
 
