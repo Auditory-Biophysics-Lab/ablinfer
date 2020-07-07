@@ -23,31 +23,26 @@ def normalize_model_config(model: Mapping, model_config: Mapping) -> Mapping:
                 raise ValueError("Missing value for %s %s" % (s.rstrip('s'), name))
 
             if process not in sec:
-                sec[process] = []
+                sec[process] = [{} for i in range(len(spec[process]))]
             elif sec[process] and len(sec[process]) != len(spec[process]):
                 raise ValueError("Either no processing parameters may be given or all must be given in %s/%s" % (s, name))
             
-            if not sec[process] and spec[process]: ## Fill them with the default values
-                sec[process].extend(({} for i in range(len(spec[process]))))
-                for p in spec[process]:
-                    sec[process].append({})
-            else:
-                for p, elem in zip(spec[process], sec[process]):
-                    defaults = {
-                        "enabled": p["status"] in ("required", "suggested"),
-                        "params": p["params"].copy()
-                    }
-                    if "enabled" not in elem:
-                        elem["enabled"] = defaults["enabled"]
-                    elif p["status"] == "required" and not elem["enabled"]:
-                        raise ValueError("Processing operation \"%s\" on %s/%s may not be disabled" % (p["name"], s, name))
+            for p, elem in zip(spec[process], sec[process]):
+                defaults = {
+                    "enabled": p["status"] in ("required", "suggested"),
+                    "params": p["params"].copy()
+                }
+                if "enabled" not in elem:
+                    elem["enabled"] = defaults["enabled"]
+                elif p["status"] == "required" and not elem["enabled"]:
+                    raise ValueError("Processing operation \"%s\" on %s/%s may not be disabled" % (p["name"], s, name))
 
-                    if "params" not in elem:
-                        elem["params"] = defaults["params"]
-                    else:
-                        for p, v in defaults["params"].items():
-                            if p not in elem["params"]:
-                                elem["params"][p] = v
+                if "params" not in elem:
+                    elem["params"] = defaults["params"]
+                else:
+                    for p, v in defaults["params"].items():
+                        if p not in elem["params"]:
+                            elem["params"][p] = v
 
     if "params" not in model_config:
         logging.warning("Missing params section")

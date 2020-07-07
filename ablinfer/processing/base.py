@@ -34,7 +34,7 @@ _OPS: Mapping[str, Mapping] = {
 
 processing_ops = ROMappingWrapper(_OPS)
 
-def register_processing(typ: Union[str, Sequence[str], None], name: str, types: str, actions: Optional[Mapping]) ->  Callable:
+def register_processing(typ: Union[str, Sequence[str], None], name: str, types: Sequence[str], actions: Optional[Mapping]) ->  Callable:
     """Register a processing operation.
 
     The format of `actions` is:
