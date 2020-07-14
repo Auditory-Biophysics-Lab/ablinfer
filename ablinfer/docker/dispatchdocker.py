@@ -94,6 +94,8 @@ class DispatchDocker(DispatchBase):
         self.container.start()
         self._on_container_start()
         for line in self.container.logs(stream=True):
+            if isinstance(line, bytes):
+                line = line.decode("utf-8")
             self.progress(DispatchStage.Run, 0, 0, line)
         resp = self.container.wait()
         if resp["StatusCode"] != 0:
