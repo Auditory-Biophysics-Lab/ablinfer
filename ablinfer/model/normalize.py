@@ -10,6 +10,7 @@ from typing import Mapping, Optional, Collection, Union, IO, Tuple, Dict, Set, A
 from .typing_shim import get_origin, get_args
 import collections
 from .update import __version__, update_model
+from ..processing import processing_ops
 
 def get_origin_w(tp):
     o = get_origin(tp)
@@ -76,10 +77,10 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
                 raise ValueError("Missing required field %s" % '/'.join(fragment+(k,)))
             elif optional and k not in d:
                 logging.warning("Missing optional field %s" % '/'.join(fragment+(k,)))
-                if isinstance(c, bool):
-                    d[k] = c
-                elif c is not None:
+                if callable(c):
                     d[k] = c()
+                elif c is not None:
+                    d[k] = c
             elif isinstance(t, Mapping): ## Recurse
                 simple_verify(d[k], t, fragment=fragment+(k,), warn_extra=warn_extra)
             elif not check_rec(d[k], t):
@@ -205,7 +206,25 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
                 if sname not in v:
                     v[sname] = []
                 for n, sec in enumerate(v[sname]):
-                    simple_verify(sec, process_spec, fragment=(name, k, sname, str(n)))
+                    process_spec_this = process_spec.copy()
+                    if sec["operation"] in processing_ops[name[:-1]]:
+                        psec = processing_ops[name[:-1]][sec["operation"]][2]
+                        if psec is not None:
+                            action = sec["action"] if "action" in sec else None
+                            if action in psec or None in psec:
+                                if action in psec:
+                                    act = psec[action]
+                                else:
+                                    logging.info("Unknown %sprocessing action %s for %s, using default" % (sname, action, sec["operation"]))
+                                    act = psec[None]
+
+                                if act:
+                                    process_spec_this["params"] = {param_name: (Optional[type_spec[param_val["type"]]["default"]], param_val["default"]) for param_name, param_val in act.items()}
+                            else:
+                                logging.warning("Unknown %sprocessing action %s for %s, skipping" % (sname, action, sec["operation"]))
+                    else:
+                        logging.warning("Unknown %sprocessing operation %s, skipping" % (sname, sec["operation"]))
+                    simple_verify(sec, process_spec_this, fragment=(name, k, sname, str(n)))
                     if sec["status"] not in ("required", "suggested", "optional"):
                         raise ValueError("Invalid status %s for %s" % (repr(sec["status"]), '/'.join((name, k, sname, str(n)))))
 
