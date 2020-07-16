@@ -82,7 +82,7 @@ This section should only be present for ``type="docker"`` models.
    * - ``image_tag``
      - The image tag, or ``"latest"`` if there isn't one.
    * - ``data_path``
-     - The folder inside the container where the input/output should be written to/read from. This should be world-read/write-able. Use only forward slashes (``/``) in the path, not backward slashes.
+     - The folder inside the container where the input/output should be written to/read from. This should be world-read/write-able. Use only forward slashes (``/``) in the path, not backward slashes. For most cases ``/tmp`` suffices.
 
 An example of these fields is:
 
