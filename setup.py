@@ -2,15 +2,14 @@ import setuptools
 
 setuptools.setup(
     name="ablinfer",
-    version="0.0.1",
+    version="1.0.0",
     author="Ben Connors",
-    author_email="ben.connors@uwo.ca",
-    description="Library for dispatching to inference models",
-    url="",
+    description="Library for dispatching medical images to registration and segmentation toolkits.",
+    url="https://github.com/Auditory-Biophysics-Lab/ablinfer",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Operation System :: OS Independent",
+        "Operating System :: OS Independent",
     ],
     python_requires=">=3.3",
     install_requires=[
