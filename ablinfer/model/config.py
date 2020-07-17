@@ -8,6 +8,10 @@ def normalize_model_config(model: Mapping, model_config: Mapping) -> Mapping:
 
     The model is assumed to be normalized.
 
+    Note that for processing configuration to be normalized properly, the processing functions must 
+    be imported before running this function; e.g. :mod:`ablinfer.slicer.processing` requires 
+    dependencies not usually found outside 3DSlicer and so is not imported automatically.
+
     :param model: The model.
     :param model_config: The model configuration to normalize; this will modify it.
     :returns: The modified model config, for convenience.

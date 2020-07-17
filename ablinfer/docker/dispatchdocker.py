@@ -49,7 +49,12 @@ class DispatchDocker(DispatchBase):
         super()._validate_model_config()
 
         imagename = self.model["docker"]["image_name"] + ':' + self.model["docker"]["image_tag"]
-        self.client.images.get(imagename)
+        try:
+            self.client.images.get(imagename)
+        except docker.errors.ImageNotFound:
+            self.progress(DispatchStage.Validate, 0, 0, "Docker image not found locally, trying to pull it")
+            self.client.images.pull(imagename)
+            self.client.images.get(imagename)
 
     def _make_fmap(self):
         return self._make_fmap_helper(self.model["docker"]["data_path"])

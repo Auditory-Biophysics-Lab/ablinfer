@@ -25,9 +25,9 @@ class DispatchRemote(DispatchBase):
     """Class for dispatching to an ABLInfer server.
 
     A required ``base_url`` key is added to ``config``, which must be the server's base URL, which
-    will be passed to :func:``urllib.parse.urljoin`` to construct the query URLs. In addition, a
+    will be passed to :func:`urllib.parse.urljoin` to construct the query URLs. In addition, a
     ``session`` parameter is added to ``config`` which allows the user to provide a 
-    :class:``requests.Session`` instance for SSL verification or authentication.
+    :class:`requests.Session` instance for SSL verification or authentication.
     """
     def __init__(self, config=None):
         self.base_url = None

@@ -16,6 +16,12 @@ class SlicerDispatchMixin(DispatchBase):
 
     A ``tmp_path`` key is added to ``config``, which must contain the location to store temporary
     files for dispatching.
+
+    This class does not implement any actual dispatching; this must be combined with the 
+    appropriate dispatcher to function properly, e.g.::
+
+        class SlicerDispatchActual(SlicerDispatchMixin, DispatchActual):
+            pass
     """
     def __init__(self, config):
         self.tmp_path = None

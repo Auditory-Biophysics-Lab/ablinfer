@@ -2,7 +2,7 @@ import requests as r
 import time
 
 class ProgressReporter:
-    def report(self, chunk_length):
+    def _report(self, chunk_length):
         ct = time.monotonic()
         delta = ct - self.last
         self.avg = 0.8*self.avg + 0.2*(chunk_length/delta)
@@ -19,6 +19,12 @@ class ProgressReporter:
             else:
                 self.func(0, self.header + " %.1f/- MiB (%.1f MiB/s)" % (r_mib, a_mib))
 
+    def report(self, chunk_length):
+        self.toadd += chunk_length
+        if self.toadd > 512*1024:
+            self._report(self.toadd)
+            self.toadd = 0
+
     __call__ = report
 
     def __init__(self, total, header, func, period = 0):
@@ -30,6 +36,7 @@ class ProgressReporter:
         self.last_report = self.last
         self.avg = 0
         self.period = period
+        self.toadd = 0
 
         func(0, header)
 
