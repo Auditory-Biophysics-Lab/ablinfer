@@ -21,7 +21,7 @@ class ProgressReporter:
 
     def report(self, chunk_length):
         self.toadd += chunk_length
-        if self.toadd > 512*1024:
+        if self.toadd > 512*1024 or self.running+self.toadd == self.total:
             self._report(self.toadd)
             self.toadd = 0
 
