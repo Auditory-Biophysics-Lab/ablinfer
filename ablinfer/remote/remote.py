@@ -69,7 +69,7 @@ class DispatchRemote(DispatchBase):
         resp = self.session.get(self.base_url)
         resp.raise_for_status()
         resp = resp.json()
-        if resp["data"]["server"] != "ablinfer":
+        if resp["data"]["server"] != "inferserver":
             raise ValueError("Unknown server %s" % repr(resp["data"]["server"]))
 
     def _validate_model_config(self):

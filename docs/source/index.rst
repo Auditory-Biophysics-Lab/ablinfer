@@ -18,6 +18,7 @@ To create a new model for use with ABLInfer, first follow :ref:`docker-image` to
    docker_image
    model_ref
    model_config
+   inferserver
 
 .. toctree::
    :maxdepth: 1
