@@ -91,7 +91,7 @@ class DispatchDocker(DispatchBase):
             fname, fpath = (i[::-1] for i in fmap[k][::-1].split('/', 1))
 
             logging.info("Storing file %s to container as %s" % (v["value"], fpath+'/'+fname))
-            self.progress(DispatchStage.Save, n/total, 0, "Storing file %s...")
+            self.progress(DispatchStage.Save, n/total, 0, "Storing file %s..." % v["value"])
             put_file(self.container, fpath, v["value"], name=fname)
 
     def _run_command(self, cmd):

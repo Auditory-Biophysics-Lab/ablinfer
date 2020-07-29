@@ -192,7 +192,7 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
             simple_verify(v, part_spec, fragment=(name, k), warn_extra=False)
 
             typ = v["type"]
-            if name == "params" and typ not in ("int", "float", "bool", "enum"):
+            if name == "params" and typ not in ("int", "float", "bool", "enum", "string"):
                 raise ValueError("Invalid %s type %s" % (name, repr(typ)))
             elif name in ("outputs", "inputs") and typ not in ("volume", "segmentation"):
                 raise ValueError("Invalid %s type %s" % (name, repr(typ)))

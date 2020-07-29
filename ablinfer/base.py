@@ -327,7 +327,7 @@ class DispatchBase(metaclass=ABCMeta):
         ## Ensure only one run is underway
         with self._lock:
             self.model = update_normalize_model(model)[0]
-            self.model_config = model_config
+            self.model_config = normalize_model_config(self.model, model_config)
             self.progress = progress
 
             self._run()

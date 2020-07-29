@@ -56,7 +56,7 @@ def normalize_model_config(model: Mapping, model_config: Mapping) -> Mapping:
     for name, spec in model["params"].items():
         if name not in csec:
             logging.warning("Using default value for params/%s" % name)
-            csec["name"] = {"value": spec["default"]}
+            csec[name] = {"value": spec["default"]}
             continue
         sec = csec[name]
         if "value" not in sec:

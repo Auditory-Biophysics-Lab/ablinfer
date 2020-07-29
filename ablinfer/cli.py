@@ -103,7 +103,7 @@ if __name__ == "__main__":
             params["action"] = "store_true"
         elif typ == "enum":
             params["choices"] = tuple(k["enum"].values())
-        elif typ == "str":
+        elif typ == "string":
             pass
         else:
             raise ValueError("Unknown type %s" % typ)
@@ -139,6 +139,8 @@ if __name__ == "__main__":
         else:
             stage = "    "
 
+        if s.endswith('\n'):
+            s = s[:-1]
         print("[%s] %3.0f%%, %3.0f%%: %s" % (stage, 100*f1, 100*f2, s))
 
     dispatch.run(
