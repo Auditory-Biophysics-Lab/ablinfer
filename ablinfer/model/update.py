@@ -12,6 +12,10 @@ functions will then be run in sequence until the model has been brought to the l
 This version is determined by the "json_version" field; if absent, the model is assumed to be a
 DeepInfer model.
 
+v1.2
+- Added the "ID" field
+- Added the "colours" and "names" parameters to "segmentation" parameters
+
 v1.1
 - Added the "website" field and removed "brief_description"
 
@@ -31,6 +35,7 @@ import re
 from typing import Tuple, Callable, IO, Dict, Union
 
 __version__ = "1.2"
+__version__int = tuple((int(i) for i in __version__.split('.')))
 
 _UPDATES = {}
 def _register(s: str) ->  Callable:
@@ -184,7 +189,16 @@ def update_model(model: Dict, updated: bool = False) ->  Tuple[Dict, bool]:
     if "json_version" in model:
         v = model["json_version"]
 
-        if v > __version__:
+        try:
+            major, minor = (int(i) for i in v.split('.'))
+            v_i = (major, minor)
+        except:
+            raise ValueError("Model version %s is invalid (should be major.minor)" % v)
+
+        ## Normalize the version, just in case
+        v = "%d.%d" % v_i
+
+        if v_i > __version__int:
             raise ValueError("Model version %s is too new (this version is %s)" % (v, __version__))
         elif v == __version__:
             return model, updated

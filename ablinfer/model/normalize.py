@@ -145,6 +145,8 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
         "segmentation": {
             "labelmap": (Optional[bool], False),
             "master": Optional[str],
+            "colours": (Optional[Mapping[str, Any]], OD),
+            "names": (Optional[Mapping[str, str]], OD),
         },
         "int": {
             "min": (Optional[Number], -2147483648),
@@ -200,6 +202,18 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
             if typ == "enum":
                 if not isinstance(v["enum"], Mapping):
                     v["enum"] = OD(((i, i) for i in v["enum"]))
+            elif typ == "segmentation":
+                if "colours" not in v:
+                    v["colours"] = OD()
+                for colourk, colourv in v["colours"].items():
+                    if not isinstance(colourv, Collection[Number]) or len(colourv) not in (3, 4):
+                        raise ValueError("Segmentation colours must be 3- or 4-element arrays of floats, not \"%s\"" % repr(colourv))
+                    elif len(colourv) == 3:
+                        ## Fill in opacity
+                        v["colours"][colourk] = (*colourv, 1)
+                    for colour in colourv:
+                        if colour < 0 or colour > 1:
+                            raise ValueError("Invalid segementation colour %s, must be a float on [0,1]" % repr(colour))
 
             if name != "params":
                 sname = "pre" if name == "inputs" else "post"

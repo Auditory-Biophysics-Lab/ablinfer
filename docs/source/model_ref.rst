@@ -189,9 +189,13 @@ Segmentation Inputs (``type="segmentation"``)
    * - Field
      - Description
    * - ``labelmap``
-     - Whether or not the input is actually a labelmap but should be converted to a segmentation before use. Don't use circular references or Slicer may explode.
+     - Whether or not the input is actually a labelmap but should be converted to a segmentation before use. Don't use circular references or Slicer may explode. Note that in most cases this should be set to false, as labelmaps can be loaded directly as segmentations.
+   * - ``colours``
+     - [Optional] A mapping from label value (typically a string representation of a positive integer) to the desired colour, which is a 3- or 4-tuple of floats on [0,1] corresponding to the segmentation's red, green, blue, and, if desired, opacity (assumed to be 1 if omitted). Not all labels need be present; those labels that aren't added are left with the default colours of whatever software is used.
+   * - ``names``
+     - [Optional] A mapping from label value (see ``colours``) to a string name for that component.
    * - ``master``
-     - [Optional] The name of the master volume for this segmentation (e.g. ``"input1"``, not the friendly name).
+     - [Optional] The name of the master volume for this segmentation (e.g. ``"input1"``, not the friendly name). Note that for Slicer, this field is mandatory for any segmentations requiring pre- or post-processing using the Segment Editor.
 
 An example is:
 
@@ -209,6 +213,13 @@ An example is:
    
                "type": "segmentation",
                "labelmap": true,
+               "colours": {
+                   "2": [0.5, 0.2, 1, 0.5],
+                   "4": [1, 0, 0]
+               },
+               "names": {
+                   "3": "The One We Really Care About"
+               },
                "master": "input1",
                "..."
            },
@@ -483,6 +494,13 @@ The following is a complete example of a model, tying together all of the above 
    
                "type": "segmentation",
                "labelmap": false,
+               "colours": {
+                   "2": [0.5, 0.2, 1, 0.5],
+                   "4": [1, 0, 0]
+               },
+               "names": {
+                   "3": "The One We Really Care About"
+               },
                "master": "input_vol",
                "pre": [
                    {

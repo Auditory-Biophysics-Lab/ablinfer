@@ -145,6 +145,38 @@ class SlicerDispatchMixin(DispatchBase):
                     slicer.mrmlScene.RemoveNode(lvnode)
                 else:
                     _, node = slicer.util.loadSegmentation(of, returnNode=True)
+
+                ## Fill in the colours and names
+
+                ## First, map the label values to the actual segment objects
+                segmap = {}
+                segmentation = node.GetSegmentation()
+                display_node = node.GetDisplayNode()
+                if display_node is None:
+                    logging.warning("Can't find display node for segmentation, opacity will be skipped")
+                for i in range(segmentation.GetNumberOfSegments()):
+                    thisseg = segmentation.GetNthSegment(i), segmentation.GetNthSegmentID(i)
+                    segmap[thisseg.GetLabelValue()] = thisseg
+
+                ## Now set the names and colours
+                for label in set(member["colours"]).union(member["names"]):
+                    try:
+                        ilabel = int(label)
+                    except ValueError:
+                        logging.warning("Invalid label %s, ignoring" % (repr(label)))
+                        continue
+                    if ilabel not in segmap:
+                        logging.warning("Couldn't find segment matching label %d, ignoring" % label)
+                        continue
+                    theseg, theid = segmap[ilabel]
+                    if label in member["colours"]:
+                        thecolour = member["colours"][label]
+                        theseg.SetColor(tuple(thecolour[:3]))
+                        if len(thecolour) == 4: ## Opacity
+                            dn.SetSegmentOpacity4D(theid, thecolour[3])
+                    if label in member["names"]:
+                        theseg.SetName(member["names"][label])
+
             elif member["type"] == "volume":
                 if member["labelmap"]:
                     _, node = slicer.util.loadLabelVolume(of, returnNode=True)
