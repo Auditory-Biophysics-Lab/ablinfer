@@ -384,7 +384,6 @@ class Main:
 
                     f.write(chunk)
                     h.update(chunk)
-            return jsonify(data=h.hexdigest())
 
             with session.lock:
                 del session.needed[inp]

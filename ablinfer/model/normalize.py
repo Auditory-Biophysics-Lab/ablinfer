@@ -145,8 +145,8 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
         "segmentation": {
             "labelmap": (Optional[bool], False),
             "master": Optional[str],
-            "colours": (Optional[Mapping[str, Any]], OD),
-            "names": (Optional[Mapping[str, str]], OD),
+            "colours": (Optional[Mapping], OD),
+            "names": (Optional[Mapping], OD),
         },
         "int": {
             "min": (Optional[Number], -2147483648),
@@ -165,7 +165,7 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
             "default": str,
         },
         "enum": {
-            "enum": Union[Collection[str], Mapping[str, str]],
+            "enum": Union[Collection[str], Mapping],
             "default": str,
         },
     }
@@ -178,7 +178,7 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
         "operation": str,
         "action": Optional[str],
         "targets": Optional[Collection[int]],
-        "params": Mapping[str, Any],
+        "params": Mapping,
     }
 
     def verify_part(name):
@@ -206,7 +206,7 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
                 if "colours" not in v:
                     v["colours"] = OD()
                 for colourk, colourv in v["colours"].items():
-                    if not isinstance(colourv, Collection[Number]) or len(colourv) not in (3, 4):
+                    if not isinstance(colourv, Collection) or len(colourv) not in (3, 4):
                         raise ValueError("Segmentation colours must be 3- or 4-element arrays of floats, not \"%s\"" % repr(colourv))
                     elif len(colourv) == 3:
                         ## Fill in opacity
