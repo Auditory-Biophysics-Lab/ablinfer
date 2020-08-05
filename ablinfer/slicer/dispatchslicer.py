@@ -155,8 +155,8 @@ class SlicerDispatchMixin(DispatchBase):
                 if display_node is None:
                     logging.warning("Can't find display node for segmentation, opacity will be skipped")
                 for i in range(segmentation.GetNumberOfSegments()):
-                    thisseg = segmentation.GetNthSegment(i), segmentation.GetNthSegmentID(i)
-                    segmap[thisseg.GetLabelValue()] = thisseg
+                    thisseg, thisid = segmentation.GetNthSegment(i), segmentation.GetNthSegmentID(i)
+                    segmap[thisseg.GetLabelValue()] = (thisseg, thisid)
 
                 ## Now set the names and colours
                 for label in set(member["colours"]).union(member["names"]):
@@ -173,7 +173,7 @@ class SlicerDispatchMixin(DispatchBase):
                         thecolour = member["colours"][label]
                         theseg.SetColor(tuple(thecolour[:3]))
                         if len(thecolour) == 4: ## Opacity
-                            dn.SetSegmentOpacity4D(theid, thecolour[3])
+                            display_node.SetSegmentOpacity3D(theid, thecolour[3])
                     if label in member["names"]:
                         theseg.SetName(member["names"][label])
 
