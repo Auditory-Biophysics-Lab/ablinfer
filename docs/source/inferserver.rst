@@ -22,7 +22,7 @@ As the server is written using Flask, it supports a diverse set of deployment op
 Deployment using NGINX + uWSGI
 """"""""""""""""""""""""""""""
 
-This section will illustrate an example deployment using NGINX and uWSGI, which is the tested deployment strategy. A basic familiarity with NGINX, a working NGINX server, and a working Docker server (with GPU support, if desired) is assumed. The `ArchWiki page on uWSGI <https://wiki.archlinux.org/index.php/UWSGI#Configuration>` is also helpful for troubleshooting.
+This section will illustrate an example deployment using NGINX and uWSGI, which is the tested deployment strategy. A basic familiarity with NGINX, a working NGINX server, and a working Docker server (with GPU support, if desired) is assumed. The `ArchWiki page on uWSGI <https://wiki.archlinux.org/index.php/UWSGI#Configuration>`_ is also helpful for troubleshooting.
 
 The first step is to install the needed dependencies: uWSGI and uWSGI's Python 3 plugin. Depending on your distribution, these may be packaged together or separately. These are typically called ``uwsgi`` and ``uwsgi-plugin-python``, respectively. If you're unfamiliar with Python virtualenvs, install PipEnv as well, either with ``pip install pipenv`` or by installing your distribution's PipEnv package (often ``python-pipenv`` or ``python3-pipenv``)
 
