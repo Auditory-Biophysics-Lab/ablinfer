@@ -49,7 +49,7 @@ An example of these fields is:
 .. code-block:: json
 
    {
-       "json_version": "1.1",
+       "json_version": "1.3",
        "type": "docker",
 
        "name": "Test Segmenter",
@@ -114,6 +114,8 @@ The actual ``/inputs`` field should be an object mapping Python-friendly (i.e. t
      - A user-friendly (but short) name for the input.
    * - ``description``
      - A longer description of the input. 
+   * - ``status``
+     - One of ``"optional"`` (disabled by default but can be enabled), ``"suggested"`` (enabled by default but can be disabled), and ``"required"`` (always enabled).
    * - ``flag``
      - The flag that will be used to provide the filename of the input to the model, including the leading dash(es). If the flag is ``""`` (the empty string), the filename is passed without a flag. If the flag ends with ``=``, then the filename is passed like ``--flag=thefilename``.
    * - ``extension``
@@ -133,6 +135,7 @@ An example is:
            "input1": {
                "name": "Volume Input",
                "description": "Please select the volume to segment.",
+               "status": "required",
                "flag": "-i",
                "extension": ".nrrd",
    
@@ -167,6 +170,7 @@ An example is:
            "input1": {
                "name": "Volume Input",
                "description": "Please select the volume to segment.",
+               "status": "required",
                "flag": "-i",
                "extension": ".nrrd",
    
@@ -208,6 +212,7 @@ An example is:
            "input2": {
                "name": "Segmentation Input",
                "description": "Please select the initial segmentation.",
+               "status": "required",
                "flag": "--seg=",
                "extension": ".nrrd",
    
@@ -478,6 +483,7 @@ The following is a complete example of a model, tying together all of the above 
            "input_vol": {
                "name": "Volume Input",
                "description": "Please select the volume to segment.",
+               "status": "required",
                "flag": "-i",
                "extension": ".nrrd",
    
@@ -489,6 +495,7 @@ The following is a complete example of a model, tying together all of the above 
            "input_seg": {
                "name": "Segmentation Input",
                "description": "Please select the initial segmentation.",
+               "status": "required",
                "flag": "--seg=",
                "extension": ".nrrd",
    
@@ -565,6 +572,7 @@ The following is a complete example of a model, tying together all of the above 
            "output_seg": {
                "name": "Segmentation Output",
                "description": "Please select where to put the output segmentation.",
+               "status": "required",
                "flag": "",
                "extension": ".nii.gz",
    

@@ -49,7 +49,21 @@ And the corresponding model configuration for using 3 GPUs would be:
 
 For parameters, if the configuration is using the default value given in the model specification then it can be omitted.
 
-Unlike parameters, inputs and outputs must always be included in the model configuration. As well, the actual format of the ``value`` field **depends on the specific implementation:** for instance, the Docker implementation requires the ``value`` to be the location of the file on the host system's disk, whereas the Slicer implementation requires the ``value`` to be a Slicer node.
+Unlike parameters, inputs and outputs must always be included in the model configuration. As well, the actual format of the ``value`` field **depends on the specific implementation:** for instance, the Docker implementation requires the ``value`` to be the location of the file on the host system's disk, whereas the Slicer implementation requires the ``value`` to be a Slicer node. Note that even disabled inputs and outputs must still be present in the configuration, with at least ``"enabled"`` attribute; no further normalization/validation is done on disabled inputs/outputs:
+
+.. code-block:: json
+
+   {
+       "...",
+       "inputs": {
+           "some-disabled-input": {
+               "enabled": false
+           }
+       },
+       "..."
+   }
+
+Note that for ``"optional"`` inputs/outputs, the ``"enabled"`` attribute MUST be ``true`` or they will be disabled.
 
 Inputs and outputs have the additional ``pre`` or ``post`` list, as appropriate. Either the field must be omitted or it must contain an entry for each available processing operation in the specification. For example, the following model specification:
 
@@ -62,6 +76,7 @@ Inputs and outputs have the additional ``pre`` or ``post`` list, as appropriate.
            "input2": {
                "name": "Segmentation Input",
                "description": "Please select the initial segmentation.",
+               "status": "required",
                "...",
                "pre": [
                    {
@@ -95,6 +110,7 @@ would have the model configuration:
            "...",
            "input2": {
                "value": "...", 
+               "enabled": true,
                "pre": [
                    {
                        "enabled": true,
@@ -124,10 +140,12 @@ Using the model specification example (see :ref:`model-example`), the model conf
        "inputs": {
            "input_vol": {
                "value": "./input_vol.nii",
+               "enabled": true,
                "pre": []
            },
            "input_seg": {
                "value": "./input_seg.nii",
+               "enabled": true,
                "pre": [
                    {
                        "enabled": true,
@@ -155,6 +173,7 @@ Using the model specification example (see :ref:`model-example`), the model conf
        "outputs": {
            "output_seg": {
                "value": "./output_seg.nii.gz",
+               "enabled": true,
                "post": [
                    {
                        "enabled": true,

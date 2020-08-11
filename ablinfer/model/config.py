@@ -23,12 +23,16 @@ def normalize_model_config(model: Mapping, model_config: Mapping) -> Mapping:
             if name not in csec:
                 raise ValueError("Missing %s %s" % (s.rstrip('s'), name))
             sec = csec[name]
-            if "value" not in sec:
-                raise ValueError("Missing value for %s %s" % (s.rstrip('s'), name))
             if "enabled" not in sec:
                 sec["enabled"] = spec["status"] in ("required", "suggested")
             elif not sec["enabled"] and spec["status"] == "required":
                 raise ValueError("%s %s cannot be disabled" % (s.title()[:-1], name))
+
+            if not sec["enabled"]:
+                continue
+
+            if "value" not in sec:
+                raise ValueError("Missing value for %s %s" % (s.rstrip('s'), name))
 
             if process not in sec:
                 sec[process] = [{} for i in range(len(spec[process]))]
