@@ -94,6 +94,8 @@ class SlicerDispatchMixin(DispatchBase):
         self._input_nodes = {}
 
         for k, v in self.model["inputs"].items():
+            if not self.model_config["inputs"][k]["enabled"]:
+                continue
             ## Don't use os.path.join here: the Docker container might not have the same OS as the 
             ## host machine, which is where we are now. Forward slashes should work on any system,
             ## so just use them here; we already removed any trailing slash from actual_path
@@ -127,10 +129,14 @@ class SlicerDispatchMixin(DispatchBase):
 
         ## Restore the input nodes
         for k, v in self._input_nodes.items():
+            if not self.model_config["inputs"][k]["enabled"]:
+                continue
             self.model_config["inputs"][k]["value"] = v
 
         ## Now load them into Slicer
         for k, member in self.model["outputs"].items():
+            if not self.model_config["outputs"][k]["enabled"]:
+                continue
             logging.info("Loading \"%s\"..." % member["name"])
             of = self.model_config["outputs"][k]["value"]
             if member["type"] == "segmentation":

@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
         typ = v["type"]
         if typ in ("segmentation", "volume"): ## File
-            params["required"] = True
+            params["required"] = v["status"] == "required"
         elif typ == "int":
             params["type"] = int
         elif typ == "float":
@@ -120,6 +120,8 @@ if __name__ == "__main__":
         s = sec_map[k]
         if getattr(args, k) is not None:
             model_config[s][k] = {"value": getattr(args, k)}
+        elif s in ("inputs", "outputs"):
+            model_config[s][k] = {"enabled": False}
 
     def progress(stage, f1, f2, s):
         if stage == DispatchStage.Initial:
