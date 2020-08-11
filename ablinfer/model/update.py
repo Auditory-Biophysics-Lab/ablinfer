@@ -12,6 +12,9 @@ functions will then be run in sequence until the model has been brought to the l
 This version is determined by the "json_version" field; if absent, the model is assumed to be a
 DeepInfer model.
 
+v1.3
+- Added "status" field to inputs and outputs to allow optional I/O
+
 v1.2
 - Added the "ID" field
 - Added the "colours" and "names" parameters to "segmentation" parameters
@@ -34,7 +37,7 @@ import logging
 import re
 from typing import Tuple, Callable, IO, Dict, Union
 
-__version__ = "1.2"
+__version__ = "1.3"
 __version__int = tuple((int(i) for i in __version__.split('.')))
 
 _UPDATES = {}
@@ -178,6 +181,14 @@ def update_1_1(model):
         model["id"] = tid
 
     return model
+
+@_register("1.2")
+def update_1_2(model):
+    model["json_version"] = "1.3"
+    for s in ("inputs", "outputs"):
+        for v in model[s].values():
+            if "status" not in v:
+                v["status"] = "required"
 
 def update_model(model: Dict, updated: bool = False) ->  Tuple[Dict, bool]:
     """Update a model to the newest version.

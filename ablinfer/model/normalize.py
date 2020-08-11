@@ -132,6 +132,7 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
     part_spec = {
         "name": str,
         "description": str,
+        "status": str,
         "flag": str,
         "extension": str,
         "type": str,
@@ -214,6 +215,11 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
                     for colour in colourv:
                         if colour < 0 or colour > 1:
                             raise ValueError("Invalid segementation colour %s, must be a float on [0,1]" % repr(colour))
+            if name in ("outputs", "inputs"):
+                if "status" not in v:
+                    v["status"] = "required"
+                elif v["status"] not in ("required", "suggested", "optional"):
+                    raise ValueError("Invalid status %s for %s" % (repr(v["status"]), '/'.join((name, k))))
 
             if name != "params":
                 sname = "pre" if name == "inputs" else "post"
@@ -249,6 +255,7 @@ def normalize_model(model: Mapping, processing: bool = False) -> Mapping:
     verify_part("outputs")
 
     del part_spec["post"]
+    del part_spec["status"]
     del part_spec["extension"]
     verify_part("params")
 

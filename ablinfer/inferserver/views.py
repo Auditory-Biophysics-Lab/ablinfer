@@ -191,7 +191,7 @@ class Session:
 
         ## A mapping of needed items to whether or not they're busy. If an item is in here, it's 
         ## needed
-        self.needed = {k: False for k, v in model.inputs.items() if v.is_file}
+        self.needed = {k: False for k, v in model.inputs.items() if v.is_file and params["inputs"][k]["enabled"]}
 
         self.state_change = dt.datetime.now()
         self.state = Session.State.WAITING
@@ -284,6 +284,7 @@ class Main:
             return jsonify(errors=[{"detail": "Must pass the model parameters as JSON"}]), 400
 
         ## Validate and parse the user's parameters
+        ## FIXME: This should likely be taken from the regular normalization code
         model = self.models[model]
         params = request.get_json()
         params_val = {"params": {}}
@@ -308,6 +309,18 @@ class Main:
                     except Exception as e:
                         return jsonify(errors=[{"detail": "Invalid value for %s/%s: %s" % (section, name, str(e))}]), 400
                 params_val_sec[name]["value"] = value
+        
+        ## Check which inputs/outputs are enabled
+        for section in ("inputs", "outputs"):
+            params_val[section] = {n: {"enabled": v["status"] in ("required", "optional")} for n, v in model[section].items()}
+            if section not in params:
+                continue
+            for n, v in params[section].items():
+                if "enabled" in v:
+                    enabled = v["enabled"]
+                    if not enabled and model[section][n]["status"] == "required":
+                        return jsonify(errors=[{"detail": "%s %s cannot be disabled" % (section.title()[:-1], n)}])
+                    params_val[section][n]["enabled"] = enabled
 
         ## Now that they're valid, create a new session
         with self.sessions_lock:
@@ -411,6 +424,8 @@ class Main:
             with session.lock:
                 if outp not in session.model.outputs:
                     return jsonify(errors=[{"detail": "Unknown output"}]), 404
+                elif not session.params["outputs"][outp]["enabled"]:
+                    return jsonify(errors=[{"detail": "Output was not enabled"}])
                 elif session.state != Session.State.COMPLETE:
                     return jsonify(errors=[{"detail": "Session is not complete"}]), 400
             

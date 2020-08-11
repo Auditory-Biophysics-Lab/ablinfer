@@ -77,12 +77,12 @@ class DispatchBase(metaclass=ABCMeta):
         """
         self.model_config = normalize_model_config(self.model, self.model_config)
 
-        in_nodes = {i["value"] for i in self.model_config["inputs"].values()}
+        in_nodes = {i["value"] for i in self.model_config["inputs"].values() if i["enabled"]}
         if None in in_nodes:
             raise ValueError("Make sure that all inputs are selected!")
 
-        out_nodes = {i["value"] for i in self.model_config["outputs"].values()}
-        if in_nodes.intersection(out_nodes).difference((None,)) or len(out_nodes) != len(self.model_config["outputs"]):
+        out_nodes = {i["value"] for i in self.model_config["outputs"].values() if i["enabled"]}
+        if in_nodes.intersection(out_nodes).difference((None,)) or len(out_nodes) != len((i for i in self.model_config["outputs"] if i["enabled"])):
             raise ValueError("Inputs and outputs must be different")
 
     def _make_fmap_helper(self, actual_path: str) ->  Mapping[str, str]:
@@ -132,7 +132,7 @@ class DispatchBase(metaclass=ABCMeta):
         for count, (o, member) in enumerate(self.model[section].items()):
             node = self.model_config[section][o]["value"]
 
-            if process not in member:
+            if process not in member or not self.model_config[section][o]["enabled"]:
                 continue
             string = "Running %sprocessing for %s..." % (process, member["name"])
             logging.info(string)
@@ -178,7 +178,9 @@ class DispatchBase(metaclass=ABCMeta):
             return (f, v,)
 
         for n in ("inputs", "outputs"):
-            for k, _ in self.model_config[n].items():
+            for k, v in self.model_config[n].items():
+                if not v["enabled"]:
+                    continue
                 cmd[k] = format_flag(self.model[n][k]["flag"], fmap[k])
 
         for k in self.model_config["params"]:

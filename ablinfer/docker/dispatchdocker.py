@@ -88,6 +88,9 @@ class DispatchDocker(DispatchBase):
         ## locations on the local machine. We need to copy the input files into the container
         total = len(self.model_config["inputs"])
         for n, (k, v) in enumerate(self.model_config["inputs"].items()):
+            if not v["enabled"]:
+                logging.info("Skipping disabled input %s" % k)
+                continue
             fname, fpath = (i[::-1] for i in fmap[k][::-1].split('/', 1))
 
             logging.info("Storing file %s to container as %s" % (v["value"], fpath+'/'+fname))
@@ -115,6 +118,9 @@ class DispatchDocker(DispatchBase):
     def _load_output(self, fmap):
         total = len(self.model_config["outputs"])
         for n, (k, v) in enumerate(self.model_config["outputs"].items()):
+            if not v["enabled"]:
+                logging.info("Skipping disabled output %s" % k)
+                continue
             self._output_files.append(v["value"])
             self.progress(DispatchStage.Load, n/total, 0, "Storing file %s...")
             get_file(self.container, fmap[k], v["value"])

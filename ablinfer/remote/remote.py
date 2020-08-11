@@ -94,7 +94,11 @@ class DispatchRemote(DispatchBase):
     def _make_command(self, flags):
         resp = self.session.post(
             urljoin_b(self.base_url, "models", self.model_id), 
-            json={"params": self.model_config["params"]},
+            json={
+                "inputs": {n: {"enabled": v["enabled"]} for n, v in self.model_config["inputs"].items()},
+                "params": self.model_config["params"],
+                "outputs": {n: {"enabled": v["enabled"]} for n, v in self.model_config["inputs"].items()},
+            },
         )
         resp.raise_for_status()
 
@@ -108,6 +112,9 @@ class DispatchRemote(DispatchBase):
     def _save_input(self, fmap):
         total = len(self.model_config["inputs"])
         for n, (name, v) in enumerate(self.model_config["inputs"].items()):
+            if not v["enabled"]:
+                logging.info("Skipping disabled input %s" % name)
+                continue
             string = "Uploading %s..." % name
             logging.info(string)
             with open(v["value"], "rb") as f:
@@ -149,6 +156,9 @@ class DispatchRemote(DispatchBase):
     def _load_output(self, fmap):
         total = len(self.model_config["outputs"].items())
         for n, (name, v) in enumerate(self.model_config["outputs"].items()):
+            if not v["enabled"]:
+                logging.info("Skipping disabled output %s" % name)
+                continue
             logging.info("Saving output %s" % name)
             self._output_files.append(v["value"])
             resp = self.session.get(urljoin_b(self.base_url, "sessions", self.remote_session, "outputs", name), stream=True)
