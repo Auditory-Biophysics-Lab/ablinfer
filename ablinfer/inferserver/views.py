@@ -312,13 +312,13 @@ class Main:
         
         ## Check which inputs/outputs are enabled
         for section in ("inputs", "outputs"):
-            params_val[section] = {n: {"enabled": v["status"] in ("required", "optional")} for n, v in model[section].items()}
+            params_val[section] = {n: {"enabled": v["status"] in ("required", "optional")} for n, v in model.model[section].items()}
             if section not in params:
                 continue
             for n, v in params[section].items():
                 if "enabled" in v:
                     enabled = v["enabled"]
-                    if not enabled and model[section][n]["status"] == "required":
+                    if not enabled and model.model[section][n]["status"] == "required":
                         return jsonify(errors=[{"detail": "%s %s cannot be disabled" % (section.title()[:-1], n)}])
                     params_val[section][n]["enabled"] = enabled
 
