@@ -30,12 +30,17 @@ if __name__ == "__main__":
     parser.add_argument("-u", "--username", type=str, help="Username for remote server")
     parser.add_argument("-p", "--password", type=str, help="Password for remote server (if none and username is provided, the password will be prompted)")
     parser.add_argument("-f", "--field-names", action="store_true", help="Use field names for model arguments instead of the model flags (only affects this CLI interface, no effect on the actual inference)")
+    parser.add_argument("-w", "--suppress-verify", action="store_true", help="Suppress the SSL verification warning (e.g. for self-signed certificates")
     parser.add_argument("model", help="Either a local model specification file or a model ID from the server")
     parser.add_argument("args", nargs=argparse.REMAINDER, help="Model arguments")
 
     args = parser.parse_args()
 
     dispatch: DispatchBase
+
+    if args.suppress_verify:
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     if args.server is not None: ## Remote dispatch
         session = requests.Session()
@@ -120,6 +125,8 @@ if __name__ == "__main__":
         s = sec_map[k]
         if getattr(args, k) is not None:
             model_config[s][k] = {"value": getattr(args, k)}
+            if s in ("inputs", "outputs"):
+                model_config[s][k]["enabled"] = True
         elif s in ("inputs", "outputs"):
             model_config[s][k] = {"enabled": False}
 

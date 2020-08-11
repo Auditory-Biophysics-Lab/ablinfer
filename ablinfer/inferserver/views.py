@@ -213,7 +213,7 @@ class Session:
             sv = model.model[s]
             for k, v in sv.items():
                 self.filenames[k] = path.join(self.base_dir, s, k+v["extension"])
-                self.params[s][k] = {"value": self.filenames[k]}
+                self.params[s][k] = {"value": self.filenames[k], "enabled": self.params[s][k]["enabled"]}
         self.params["__logs"] = path.join(self.base_dir, "logs")
         self.params["__error"] = path.join(self.base_dir, "error")
 
@@ -316,6 +316,8 @@ class Main:
             if section not in params:
                 continue
             for n, v in params[section].items():
+                if n not in model.model[section]:
+                    return jsonify(errors=[{"detail": "Unknown %s %s" % (section[:-1], n)}])
                 if "enabled" in v:
                     enabled = v["enabled"]
                     if not enabled and model.model[section][n]["status"] == "required":

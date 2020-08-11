@@ -97,12 +97,13 @@ class DispatchRemote(DispatchBase):
             json={
                 "inputs": {n: {"enabled": v["enabled"]} for n, v in self.model_config["inputs"].items()},
                 "params": self.model_config["params"],
-                "outputs": {n: {"enabled": v["enabled"]} for n, v in self.model_config["inputs"].items()},
+                "outputs": {n: {"enabled": v["enabled"]} for n, v in self.model_config["outputs"].items()},
             },
         )
         resp.raise_for_status()
 
         self.remote_session = resp.json()["data"]["session_id"]
+        self.progress(DispatchStage.Validate, 0.5, 1, "Session ID is %s" % (self.remote_session))
 
         return []
 
