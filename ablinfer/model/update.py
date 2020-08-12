@@ -190,6 +190,8 @@ def update_1_2(model):
             if "status" not in v:
                 v["status"] = "required"
 
+    return model
+
 def update_model(model: Dict, updated: bool = False) ->  Tuple[Dict, bool]:
     """Update a model to the newest version.
 

@@ -81,8 +81,8 @@ class DispatchBase(metaclass=ABCMeta):
         if None in in_nodes:
             raise ValueError("Make sure that all inputs are selected!")
 
-        out_nodes = {i["value"] for i in self.model_config["outputs"].values() if i["enabled"]}
-        if in_nodes.intersection(out_nodes).difference((None,)) or len(out_nodes) != sum((1 for i in self.model_config["outputs"].values() if i["enabled"])):
+        out_nodes = {i["value"] for i in self.model_config["outputs"].values() if i["enabled"] and i["value"] is not None}
+        if in_nodes.intersection(out_nodes).difference((None,)) or len(out_nodes) != sum((1 for i in self.model_config["outputs"].values() if i["enabled"] and i["value"] is not None)):
             raise ValueError("Inputs and outputs must be different")
 
     def _make_fmap_helper(self, actual_path: str) ->  Mapping[str, str]:
