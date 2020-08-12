@@ -209,11 +209,10 @@ class Session:
         ## Setup the filenames
         self.filenames = {}
         for s in ("inputs", "outputs"):
-            self.params[s] = {}
             sv = model.model[s]
             for k, v in sv.items():
                 self.filenames[k] = path.join(self.base_dir, s, k+v["extension"])
-                self.params[s][k] = {"value": self.filenames[k], "enabled": self.params[s][k]["enabled"]}
+                self.params[s][k]["value"] = self.filenames[k]
         self.params["__logs"] = path.join(self.base_dir, "logs")
         self.params["__error"] = path.join(self.base_dir, "error")
 
