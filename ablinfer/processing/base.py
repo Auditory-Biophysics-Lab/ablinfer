@@ -62,12 +62,12 @@ def register_processing(typ: Union[str, Sequence[str], None], name: str, types: 
     with the exception that any pre/post sections are invalid. The type may be "segmentation" or
     "volume", but these MUST NOT be modified by any processing operations.
 
-    @param typ is either "input", "output", or None, in which case the processing is considered
-               valid for both inputs and outputs.
-    @param name is the name (not user-friendly) for the action
-    @param types is the type of inputs/outputs (e.g. "segmentation", "volume") that this operation
-                 is valid for
-    @param actions either None or a dictionary describing the types for each action
+    :param typ: Is either "input", "output", or None, in which case the processing is considered
+                valid for both inputs and outputs.
+    :param name: Is the name (not user-friendly) for the action
+    :param types: Is the type of inputs/outputs (e.g. "segmentation", "volume") that this operation
+                  is valid for
+    :param actions: Either None or a dictionary describing the types for each action
     """
     if typ is None:
         typ = tuple(_OPS)
