@@ -7,5 +7,5 @@ verify_ssl = true
 sphinx = "*"
 
 [packages]
-docker = "4.2.0"
+docker = "4.3.0"
 requests = "*"

@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="ablinfer",
-    version="1.2.0",
+    version="1.2.1",
     author="Ben Connors",
     description="Library for dispatching medical images to registration and segmentation toolkits.",
     url="https://github.com/Auditory-Biophysics-Lab/ablinfer",
@@ -13,7 +13,7 @@ setuptools.setup(
     ],
     python_requires=">=3.3",
     install_requires=[
-        "docker>=4.2.0, <=4.2.2", ## Still waiting for device requests to be merged >.>
+        "docker>=4.3.0",
         "requests",
     ],
 )
