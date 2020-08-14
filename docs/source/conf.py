@@ -10,11 +10,11 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
 import sys
-sys.path.insert(0, "/home/ben/Workspace/ablinfer/")
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.basename(__file__), "..", "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.basename(__file__), "..", "..", "..")))
 
 
 # -- Project information -----------------------------------------------------
@@ -35,6 +35,8 @@ extensions = [
     'sphinx.ext.intersphinx',
 ]
 
+autodoc_mock_imports = ["requests", "docker", "slicer"]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -47,6 +49,8 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "requests": ("https://2.python-requests.org/en/master", None),
 }
+
+master_doc = "index"
 
 
 # -- Options for HTML output -------------------------------------------------
