@@ -17,8 +17,10 @@ To create a new model for use with ABLInfer, first follow :ref:`docker-image` to
    configuring_docker
    docker_image
    model_ref
+   slicer_processing
    model_config
    inferserver
+   cli
 
 .. toctree::
    :maxdepth: 1
@@ -29,6 +31,13 @@ To create a new model for use with ABLInfer, first follow :ref:`docker-image` to
    remote
    slicer
    model
+   processing
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Developers:
+
+   
 
 
 Indices and tables
