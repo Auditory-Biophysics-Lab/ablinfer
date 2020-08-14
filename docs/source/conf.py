@@ -12,8 +12,7 @@
 #
 import os
 import sys
-## For the dummy slicer module so imports succeed
-#sys.path.insert(0, os.path.abspath("."))
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.basename(__file__), "..", "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.basename(__file__), "..", "..", "..")))
 
@@ -50,6 +49,8 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "requests": ("https://2.python-requests.org/en/master", None),
 }
+
+master_doc = "index"
 
 
 # -- Options for HTML output -------------------------------------------------
