@@ -4,7 +4,8 @@ import time
 class ProgressReporter:
     def _report(self, chunk_length):
         ct = time.monotonic()
-        delta = ct - self.last
+        ## Apparently Windows doesn't give enough precision here
+        delta = max(ct - self.last, 0.0000001)
         self.avg = 0.8*self.avg + 0.2*(chunk_length/delta)
         self.running += chunk_length
         self.last = ct
