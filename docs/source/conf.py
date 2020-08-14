@@ -10,11 +10,12 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
 import sys
-sys.path.insert(0, "/home/ben/Workspace/ablinfer/")
+## For the dummy slicer module so imports succeed
+#sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.basename(__file__), "..", "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.basename(__file__), "..", "..", "..")))
 
 
 # -- Project information -----------------------------------------------------
@@ -34,6 +35,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
 ]
+
+autodoc_mock_imports = ["requests", "docker", "slicer"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
