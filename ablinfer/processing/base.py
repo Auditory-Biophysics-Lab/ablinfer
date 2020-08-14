@@ -39,25 +39,29 @@ def register_processing(typ: Union[str, Sequence[str], None], name: str, types: 
 
     The format of `actions` is:
 
-    {
-        None: {...}, ## Default action
-        "action1": {...}, ## Named action
-        ...
-    }
+    .. code-block:: python
+
+       {
+           None: {...}, ## Default action
+           "action1": {...}, ## Named action
+           ...
+       }
 
     Each sub-dictionary is of the same form as the "inputs" or "outputs" object in a model JSON
     file, e.g.:
 
-    {
-        "param1": {
-            "name": "Parameter 1",
-            "type": "int",
-            "min": 0,
-            "max": 10,
-            "default": 5,
-        },
-        ...
-    }
+    .. code-block:: python
+
+       {
+           "param1": {
+               "name": "Parameter 1",
+               "type": "int",
+               "min": 0,
+               "max": 10,
+               "default": 5
+           },
+           ...
+       }
 
     with the exception that any pre/post sections are invalid. The type may be "segmentation" or
     "volume", but these MUST NOT be modified by any processing operations.
