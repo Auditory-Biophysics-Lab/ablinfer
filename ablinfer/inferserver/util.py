@@ -19,7 +19,7 @@ try:
 except ImportError:
     HAS_ITK = False
 else:
-    HAS_SITK = True
+    HAS_ITK = True
 
 if not HAS_ITK and not HAS_SITK:
     logging.warning("SimpleITK and ITK are both unavailable, file conversion will not work")
