@@ -8,7 +8,6 @@ import time
 
 try:
     import sys
-    sys.path.insert(0, "/home/ben/Programs/Slicer/lib/Python/lib/python3.6/site-packages/SimpleITK-2.0.0rc2.dev133-py3.6-linux-x86_64.egg")
     import SimpleITK as sitk
 except ImportError:
     HAS_SITK = False
