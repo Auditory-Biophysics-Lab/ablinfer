@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="ablinfer",
-    version="1.2.1",
+    version="1.2.2",
     author="Ben Connors",
     description="Library for dispatching medical images to registration and segmentation toolkits.",
     url="https://github.com/Auditory-Biophysics-Lab/ablinfer",

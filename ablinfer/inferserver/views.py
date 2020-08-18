@@ -21,14 +21,14 @@ from ..docker import DispatchDocker
 from ..model import load_model
 
 from . import app
-from .util import KeepAliveIterator, guess_filetype
+from .util import KeepAliveIterator, guess_filetype, can_convert, convert_image
 
 for d in ("MODEL_PATH", "SESSION_PATH"):
     d = app.config[d]
     if not path.isdir(d):
         os.makedirs(d)
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 class IndexedQueue:
     """Thread-safe queue with indexing. 
@@ -79,6 +79,7 @@ class DispatchDockerServer(DispatchDocker):
                     f.write(chunk)
 
         with self.session.lock:
+            print("CLEANUP TIME")
             super()._cleanup()
             self.session.set_state(Session.State.FAILED if error else Session.State.COMPLETE)
             if error:
@@ -249,6 +250,7 @@ class Main:
         return jsonify(data=tuple(self.models.keys()))
 
     def handle_models_model_inp_check(self, model, inp):
+        """Check if an input header is valid, or can be converted."""
         if model not in self.models:
             return jsonify(errors=[{"detail": "Unknown model %s" % model}]), 404
 
@@ -261,13 +263,15 @@ class Main:
         checked = False
 
         for chunk in request.stream:
-            if len(header) < 4096:
-                header += chunk
+            header += chunk
 
         ft = guess_filetype(header)
+        convert = app.config["CONVERT_INPUTS"] and ft is not None and ft.lower() != ext.lower() and can_convert(ft, ext)
+        print("convert", convert, ft, ext)
         return jsonify(data={
             "filetype": ft,
-            "acceptable": (ext not in (".nii", ".nrrd", ".nii.gz")) or not app.config["CHECK_INPUT_FILETYPES"] or (ft is not None and ft.lower() == ext.lower()),
+            "acceptable": (ext not in (".nii", ".nrrd", ".nii.gz")) or not app.config["CHECK_INPUT_FILETYPES"] or (ft is not None and ft.lower() == ext.lower()) or convert,
+            "can_convert": convert,
         })
 
     def handle_models_model(self, model):
@@ -382,7 +386,11 @@ class Main:
             ext = session.model.inputs[inp].param["extension"]
             checked = False
 
-            with open(session.filenames[inp], "wb") as f:
+            actual_ext = None
+            convert = False
+            fname = session.filenames[inp]
+
+            with open(fname, "wb") as f:
                 for chunk in request.stream:
                     chunk = bytes(chunk)
                     if not checked:
@@ -392,12 +400,28 @@ class Main:
                             if app.config["CHECK_INPUT_FILETYPES"] and ext in (".nii", ".nii.gz", ".nrrd"):
                                 ft = guess_filetype(header)
                                 if ft is not None and ft.lower() != ext.lower():
-                                    return jsonify(errors=[{"detail": "Expected filetype %s" % ext}]), 400
+                                    if app.config["CONVERT_INPUTS"] and can_convert(ext, ft):
+                                        ## We'll try conversion later
+                                        convert = True
+                                        actual_ext = ft
+                                    else:
+                                        return jsonify(errors=[{"detail": "Expected filetype %s" % ext}]), 400
                             checked = True
                             header = None
 
                     f.write(chunk)
                     h.update(chunk)
+
+            if convert:
+                ## First, move it so the conversion picks up the actual extension
+                moved_fname = fname.replace('.', '_') + actual_ext
+                os.rename(fname, moved_fname)
+                try:
+                    convert_image(moved_fname, fname)
+                except Exception as e:
+                    return jsonify(errors=[{"detail": "Expected filetype %s" % ext}, {"detail": "Attempted conversion failed: "+str(e)}]), 400
+                finally:
+                    os.remove(moved_fname)
 
             with session.lock:
                 del session.needed[inp]
@@ -482,6 +506,12 @@ class Main:
                             client = docker.from_env()
                             container = client.containers.get(session.container)
                             break
+                        elif session.state in (Session.State.FAILED, Session.State.COMPLETE):
+                            ## Handle the case where the images finished very quickly
+                            with open(session.params["__logs"], "r") as f:
+                                for line in f:
+                                    yield line.encode("utf-8")
+                            return
                     yield ("Waiting, position in queue is %d\n" % index).encode("utf-8")
                     time.sleep(1)
 

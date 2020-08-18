@@ -6,3 +6,4 @@ CLEANUP_FILES = False                  ## Remove cleaned sessions from the disk?
 CLEANUP_SECONDS = 3600                 ## Number of seconds before a session is considered inactive
 CHECK_INPUT_FILETYPES = True           ## Verify input file types before dispatching
 WORKER_THREADS = 1                     ## Number of simultaneous inferences that can be run
+CONVERT_INPUTS = True                  ## Whether or not to try converting inputs

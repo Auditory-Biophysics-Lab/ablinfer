@@ -1,8 +1,29 @@
 import io
 import gzip
+import logging
+import os
 import queue
 import threading
 import time
+
+try:
+    import sys
+    sys.path.insert(0, "/home/ben/Programs/Slicer/lib/Python/lib/python3.6/site-packages/SimpleITK-2.0.0rc2.dev133-py3.6-linux-x86_64.egg")
+    import SimpleITK as sitk
+except ImportError:
+    HAS_SITK = False
+else:
+    HAS_SITK = True
+
+try:
+    import itk
+except ImportError:
+    HAS_ITK = False
+else:
+    HAS_SITK = True
+
+if not HAS_ITK and not HAS_SITK:
+    logging.warning("SimpleITK and ITK are both unavailable, file conversion will not work")
 
 class KeepAliveIterator:
     """Class for implementing iterators with keep-alives."""
@@ -100,3 +121,31 @@ def guess_filetype(header: bytes, partial=""):
         return ".nii"+partial
 
     return None
+
+def can_convert(fromext: str, toext: str):
+    """Figure out if we can (likely) convert from one extension to another.
+
+    :param fromext: The source extension, including leading period.
+    :param toext: The destination extension, including leading period.
+    """
+    good = (".nii", ".nii.gz", ".nrrd",)
+
+    return (HAS_SITK or HAS_ITK) and fromext.lower() in good and toext.lower() in good
+
+def convert_image(source: str, dest: str):
+    """Run the source through ITK/SimpleITK to produce the destination.
+
+    This function is intended to be called after :py:func:`can_convert` to try to actually do the 
+    conversion; note that it requires the files to be on disk.
+
+    :param source: The source filename.
+    :param dest: The destination filename.
+    """
+    if HAS_SITK:
+        im = sitk.ReadImage(source)
+        sitk.WriteImage(im, dest)
+    elif HAS_ITK:
+        im = itk.imread(source)
+        itk.imwrite(im, dest)
+    else:
+        raise Exception("No conversion library is available!")
