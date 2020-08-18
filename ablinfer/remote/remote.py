@@ -27,13 +27,16 @@ class DispatchRemote(DispatchBase):
     A required ``base_url`` key is added to ``config``, which must be the server's base URL, which
     will be passed to :func:`urllib.parse.urljoin` to construct the query URLs. In addition, a
     ``session`` parameter is added to ``config`` which allows the user to provide a 
-    :class:`requests.Session` instance for SSL verification or authentication.
+    :class:`requests.Session` instance for SSL verification or authentication. An
+    ``ignore_mismatch`` parameter has been added to config; if ``True``, any mismatch between the 
+    local version and the server version will be ignored.
     """
     def __init__(self, config=None):
         self.base_url = None
         self.session = None
         self.remote_session = None
         self.model_id = None
+        self.ignore_mismatch = False
 
         super().__init__(config=config)
 
@@ -63,6 +66,7 @@ class DispatchRemote(DispatchBase):
         if not self.base_url.endswith('/'):
             self.base_url += '/'
         self.session = self.config["session"] if "session" in self.config else r.Session()
+        self.ignore_mismatch = self.config.get("ignore_mismatch", False)
 
         ## Check the server
         logging.info("Trying server at %s..." % self.base_url)
@@ -80,7 +84,7 @@ class DispatchRemote(DispatchBase):
         except Exception as e:
             raise DispatchException("Unable to retrieve model from the server: %s" % repr(e))
 
-        if self.model["version"] != model["version"]:
+        if not self.ignore_mismatch and self.model["version"] != model["version"]:
             raise DispatchException("Version mismatch between server model and local model: server has v%s, we have v%s" % (model["version"], self.model["version"]))
 
         super()._validate_model_config()
