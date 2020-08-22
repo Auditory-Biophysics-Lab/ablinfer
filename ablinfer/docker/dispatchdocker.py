@@ -7,7 +7,6 @@ from docker.types import DeviceRequest
 
 from ..base import DispatchBase, DispatchException
 from ..constants import DispatchStage
-## FIXME: The following import should be removed when DeviceRequest support is added to `docker-py`
 from .docker_helper import put_file, get_file
 
 class DispatchDocker(DispatchBase):
